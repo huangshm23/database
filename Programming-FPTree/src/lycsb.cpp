@@ -1,16 +1,16 @@
-#include <leveldb/db.h>
+#include "leveldb/db.h"
 #include <string>
 
 #define KEY_LEN 8
 #define VALUE_LEN 8
 using namespace std;
 
-const string workload = "";
+const string workload = "workloads";
 
-const string load = workload + ""; // TODO: the workload_load filename
-const string run  = workload + ""; // TODO: the workload_run filename
+const string load = workload + "1w-rw-50-50-load.txt"; // TODO: the workload_load filename
+const string run  = workload + "1w-rw-50-50-run.txt"; // TODO: the workload_run filename
 
-const string filePath = "";
+const string filePath = "/mnt/pmemdir/test";
 
 const int READ_WRITE_NUM = 0; // TODO: how many operations
 
@@ -19,7 +19,11 @@ int main()
     leveldb::DB* db;
     leveldb::Options options;
     leveldb::WriteOptions write_options;
-    // TODO: open and initial the levelDB
+
+    // TODO: (Finished) open and initial the levelDB
+    leveldb::Status status = leveldb::DB::Open(options, filePath, &db);
+    assert(status.ok());
+
     uint64_t inserted = 0, queried = 0, t = 0;
     uint64_t* key = new uint64_t[2200000]; // the key and value are same
     bool* ifInsert = new bool[2200000]; // the operation is insertion or not
@@ -30,7 +34,11 @@ int main()
     double single_time; // single operation time
 
     printf("Load phase begins \n");
+
     // TODO: read the ycsb_load and store
+    FILE *fp = NULL;
+    //fp = fopen(load, );
+
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     // TODO: load the workload in LevelDB
