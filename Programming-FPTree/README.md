@@ -2,21 +2,21 @@
 DEMO
 ===========================
 
-####环境依赖
+###环境依赖###
 Ubuntu 18.04
 配置模拟NVM
 安装PMDK的libpmem库
 编译安装LevelDB
 c++ 11标准编译
 
-###部署步骤
+###部署步骤###
 1. [配置模拟NVM](https://software.intel.com/zh-cn/articles/how-to-emulate-persistent-memory-on-an-intel-architecture-server)
 
 2. 安装[PMDK的libpmem库](http://pmem.io/pmdk/libpmem/)
 
 3. 编译安装[LevelDB](https://github.com/google/leveldb)
 
-###目录结构描述
+###目录结构描述###
 |__gtest: 为Google Test项目目录，不用管  
 |__include: 里包含所有用到的头文件  
    |__fptree: fptree的头文件所在文件夹  
@@ -47,18 +47,18 @@ c++ 11标准编译
    |__utility_test.cpp: PAllocator等相关测试  
    |__makefile: gtest单元测试的编译文件   
 
-###系统的基本说明
+###系统的基本说明###
 
-###实现时间计划
+###实现时间计划###
 1. 5/3晚前完成系统说明书，lycsb.cpp，p_allocator.cpp的实现和运行，utility_test.cpp的运行,5/4进行检查优化并发布v1版本branch。
 2. 5/10晚前完成fptree.cpp的部分实现和fptree_test.cpp部分的运行，5/11进行检查优化并发布v2版本branch
 3. 5/17晚前完成fptree.cpp的部分实现和fptree_test.cpp部分的运行，5/18进行检查优化并发布v3版本branch
 4. 5/30晚前完成fptree.cpp的部分实现和fptree_test.cpp所有的运行，5/31进行检查优化并发布final版本branch，作为最后发布版本
 
-###V1 版本内容更新
+###V1 版本内容更新 ###
 1. 增加系统说明书。
 2. PAllocator实现并通过utility测试，p_allocator.cpp的实现和运行，utility_test.cpp的运行。
 3. LevelDB的使用以及测试，对应lycsb.cpp的实现和运行。
 
-###作者列表
-孙家桥 黄世明 何思远 黄善恒
+###作者列表###
+张家桥 黄世明 何思远 黄善恒
