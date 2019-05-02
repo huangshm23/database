@@ -1,7 +1,64 @@
 
 
-# 代码框架讲解
-下面针对框架中的每一个主要对象以及其组成进行实现说明，规定相关细节。**假设在阅读下面的讲解和代码的注释后对框架实现依然有不懂的问题，可大胆向TA提出或者在github的issue里提出，TA会相应更新进行说明**。推荐issue提问题，熟悉github的issue操作，也可以同时解决别人相关的问题。所以**有问题的时候先找百度和github的issue** ，不能解决再问TA。**假设重复问了issue提及的问题，酌情扣分处理**。
+DEMO
+===========================
+
+###########环境依赖
+
+node v0.10.28+
+redIs ~
+
+###########部署步骤
+1. 添加系统环境变量
+    export $PORTAL_VERSION="production" // production, test, dev
+
+
+2. npm install  //安装node运行环境
+
+3. gulp build   //前端编译
+
+4. 启动两个配置(已forever为例)
+    eg: forever start app-service.js
+        forever start logger-service.js
+
+
+###########目录结构描述
+|__gtest: 为Google Test项目目录，不用管  
+|__include: 里包含所有用到的头文件  
+   |__fptree: fptree的头文件所在文件夹  
+      |__fptree.h: fptree地头文件  
+   |__utility: fptree所用工具的头文件所在文件夹  
+      |__utility.h: 指纹计算等工具函数所在头文件  
+      |__clhash.h: 指纹计算所用哈希函数头文件  
+      |__p_allocator.h: NVM内存分配器头文件  
+|__src: 为项目源码所在地，完成里面所有的实现  
+   |__bin: 可执行文件所在文件夹
+      |__main: main.cpp的可执行文件
+      |__lycsb: lycsb.cpp的可执行文件
+      |__ycsb: ycsb.cpp的可执行文件
+   |__fptree.cpp: fptree的源文件，项目核心文件(TODO)  
+   |__clhash.c: 指纹计算的哈希函数源文件  
+   |__p_allocator.cpp: NVM内存分配器源文件(TODO)  
+   |__lycsb.cpp: LevelDB的YCSB测试代码(TODO)  
+   |__ycsb.cpp: FPTreeDB和LevelDB的YCSB对比测试代码(TODO)  
+   |__makefile: src下项目的编译文件  
+|__workloads: 为YCSB测试负载文件，用于YCSB Benchmark测试  
+   |__数据量-rw-读比例-写比例-load.txt: YCSB测试数据库装载文件  
+   |__数据量-rw-读比例-写比例-run.txt: YCSB测试运行文件  
+|__test: 为Google Test用户测试代码所在，请完成编译并通过所有测试  
+   |__bin: 单元测试可执行文件所在文件夹
+      |__fptree_test: fptree_test.cpp的可执行文件
+      |__utility_test: utility_test.cpp的可执行文件
+   |__fptree_test.cpp: fptree相关测试  
+   |__utility_test.cpp: PAllocator等相关测试  
+   |__makefile: gtest单元测试的编译文件   
+
+###########V1 版本内容更新
+1. 新功能     aaaaaaaaa
+2. 新功能     bbbbbbbbb
+3. 新功能     ccccccccc
+4. 新功能     ddddddddd
+
 
 ## 相关知识
 本次课程设计会教会大家很多基本知识，不了解的自行百度，详情如下:
