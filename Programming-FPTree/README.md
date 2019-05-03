@@ -3,11 +3,11 @@
 ===========================
 
 ### 环境依赖
-Ubuntu 18.04
-配置模拟NVM
-安装PMDK的libpmem库
-编译安装LevelDB
-c++ 11标准编译
+1. Ubuntu 18.04
+2. 配置模拟NVM
+3. 安装PMDK的libpmem库
+4. 编译安装LevelDB
+5. c++ 11标准编译
 
 ### 部署步骤
 1. [配置模拟NVM](https://software.intel.com/zh-cn/articles/how-to-emulate-persistent-memory-on-an-intel-architecture-server)
@@ -73,6 +73,10 @@ c++ 11标准编译
 1. 增加系统说明书。
 2. PAllocator实现并通过utility测试，p_allocator.cpp的实现和运行，utility_test.cpp的运行。注：即内存分配的实现。
 3. LevelDB的使用以及测试，对应lycsb.cpp的实现和运行。注：测试levelDB的性能，方便与之后的系统比较。
+
+### V1 版本使用说明
+1. 
+2.
 
 ### 作者列表
 张家桥 黄世明 何思远 黄善恒
