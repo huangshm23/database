@@ -49,15 +49,19 @@ c++ 11标准编译
    |__makefile: gtest单元测试的编译文件   
 ```
 ### 系统的基本说明
-#### 系统名称：FPTreeDB键值存储系统
-#### 系统功能：（其对外可用的对数据的基本操作就增删改查）
-1. Insert增
-2. Remove删
-3. Update改
-4. Find查
+#### 系统名称：FPTreeDB键值存储系统(单线程)
+#### 系统功能（其对外可用的对数据的基本操作:增删改查）:
+1. Insert增（插入数据）
+2. Remove删（删除数据）
+3. Update改（修改数据）
+4. Find查（查找数据）
 5. 系统恢复（BulkLoading方式）
+#### 附加功能：
+1. 键值数据库性能测试
+2. Google Test单元测试（模块测试）
+3. LevelDB的使用
 #### 系统架构：
-![FPTreeDB架构](../asset/FPTreeDB.png)
+![FPTreeDB架构](../assert/FPTreeDB.png)
 
 ### 实现时间计划
 1. 5/3晚前完成系统说明书，lycsb.cpp，p_allocator.cpp的实现和运行，utility_test.cpp的运行,5/4进行检查优化并发布v1版本branch。
@@ -67,8 +71,8 @@ c++ 11标准编译
 
 ### V1 版本内容更新
 1. 增加系统说明书。
-2. PAllocator实现并通过utility测试，p_allocator.cpp的实现和运行，utility_test.cpp的运行。
-3. LevelDB的使用以及测试，对应lycsb.cpp的实现和运行。
+2. PAllocator实现并通过utility测试，p_allocator.cpp的实现和运行，utility_test.cpp的运行。注：即内存分配的实现。
+3. LevelDB的使用以及测试，对应lycsb.cpp的实现和运行。注：测试levelDB的性能，方便与之后的系统比较。
 
 ### 作者列表
 张家桥 黄世明 何思远 黄善恒
