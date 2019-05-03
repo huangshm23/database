@@ -17,6 +17,7 @@ c++ 11标准编译
 3. 编译安装[LevelDB](https://github.com/google/leveldb)
 
 ### 目录结构描述
+```
 |__gtest: 为Google Test项目目录，不用管  
 |__include: 里包含所有用到的头文件  
    |__fptree: fptree的头文件所在文件夹  
@@ -46,7 +47,7 @@ c++ 11标准编译
    |__fptree_test.cpp: fptree相关测试  
    |__utility_test.cpp: PAllocator等相关测试  
    |__makefile: gtest单元测试的编译文件   
-
+```
 ### 系统的基本说明
 
 ### 实现时间计划
