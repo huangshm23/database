@@ -1,5 +1,5 @@
 
-DEMO
+系统说明书
 ===========================
 
 ### 环境依赖
@@ -49,6 +49,15 @@ c++ 11标准编译
    |__makefile: gtest单元测试的编译文件   
 ```
 ### 系统的基本说明
+#### 系统名称：FPTreeDB键值存储系统
+#### 系统功能：（其对外可用的对数据的基本操作就增删改查）
+1. Insert增
+2. Remove删
+3. Update改
+4. Find查
+5. 系统恢复（BulkLoading方式）
+#### 系统架构：
+![FPTreeDB架构](../asset/FPTreeDB.png)
 
 ### 实现时间计划
 1. 5/3晚前完成系统说明书，lycsb.cpp，p_allocator.cpp的实现和运行，utility_test.cpp的运行,5/4进行检查优化并发布v1版本branch。
