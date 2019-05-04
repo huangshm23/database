@@ -185,10 +185,10 @@ bool PAllocator::freeLeaf(PPointer p) {
 bool PAllocator::persistCatalog(){ // writeback
     // TODO:
     char *pmemaddr_allo, *pmemaddr_free;
-    if ((pmemaddr_allo = pmem_map_file(PATH, PMEM_LEN, PMEM_FILE_CREATE,
+    if ((pmemaddr_allo = pmem_map_file(allocatorCatalogPath, PMEM_LEN, PMEM_FILE_CREATE,
                 0666, &mapped_len_allo, &is_pmem_allo)) == NULL) 
         return false;
-    if ((pmemaddr_free = pmem_map_file(PATH, PMEM_LEN, PMEM_FILE_CREATE,
+    if ((pmemaddr_free = pmem_map_file(freeListPath, PMEM_LEN, PMEM_FILE_CREATE,
                 0666, &mapped_len_free, &is_pmem_free)) == NULL) 
         return false;
     string string_allo, string_free;
