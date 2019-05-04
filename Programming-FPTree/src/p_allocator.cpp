@@ -160,10 +160,27 @@ bool PAllocator::ifLeafExist(PPointer p) {
 
 // free and reuse a leaf
 bool PAllocator::freeLeaf(PPointer p) {
-    // TODO
-    
-    return false;
+    // TODO:
+    if(!ifLeafExist(p))
+        return false;
+    uint64_t fid = p.fileId, offset = p.offset, result;
+    ifstream fin(DATA_DIR + fid);
+    string s[33], s, tmp;
+    int index = 0;
+    getline(fin,s);
+    istringstream st(s);
+    while(st >> tmp)
+        s[index++] = tmp;
+    s[offset] = "00000000"; //free a leaf
+    ofstream fout(DATA_DIR + fid);
+    for(int i = 0 ; i < index; ++i){
+        fout << s[i] << " ";
+    fout.close();
+    freeList.push_back(p);
+    ++freeNUm;
+    return true;
 }
+
 
 bool PAllocator::persistCatalog(){ // writeback
     // TODO:
@@ -200,7 +217,14 @@ bool PAllocator::persistCatalog(){ // writeback
   | usedNum(8b) | bitmap(n * byte) | leaf1 |...| leafn |
 */
 // create a new leafgroup, one file per leafgroup
-bool PAllocator::newLeafGroup() {
-    // TODO
+bool PAllocator::newLeafGroup() { // wtf is this doing? where is structrue leafgroup?
+    // TODO:
+    char * pmem_addr;
+    uint64_t curfid = maxFileId + 1;
+    if( (pmem_addr = pmem_map_file(DATA_DIR + curfid, PMEM_LEN, PMEM_FILE_CREATE,
+                    0666, &mapped_len, &is_pmem)) != NULL ){
+        ++maxFileId;
+        return true;
+    }
     return false;
 }
