@@ -122,10 +122,10 @@ int main()
             status = db->Get(leveldb::ReadOptions(), buf, &tmp2);
             assert(status.ok());
         }
-        else if (tmp[i] == 'U') { //Update mean to insert or get
+        else if (tmp[i] == 'U') { 
             snprintf(buf, (size_t)9, "%lu", key[i]);
             status = db->Get(leveldb::ReadOptions(), buf, &tmp2);
-            if (!status.ok()) {
+            if (status.ok()) {
                 status = db->Put(leveldb::WriteOptions(), buf, buf);
                 assert(status.ok());
             }
