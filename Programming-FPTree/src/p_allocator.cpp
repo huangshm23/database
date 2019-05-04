@@ -69,6 +69,7 @@ PAllocator::PAllocator() {
 
 PAllocator::~PAllocator() {
     // TODO:
+    this->persistCatalog;
 }
 
 // memory map all leaves to pmem address, storing them in the fId2PmAddr
@@ -80,8 +81,8 @@ void PAllocator::initFilePmemAddr() {
     size_t mapped_len;
     int is_pmem;
     while (fid < this->maxFileId) {
-        if (pmem_addr = pmem_map_file( DATA_DIR + fid, PMEM_LEN, PMEM_FILE_CREATE,
-                    0666, &mapped_len, &is_pmem) != NULL) {
+        if ((pmem_addr = (char *)pmem_map_file( (DATA_DIR + to_string(fid)).c_str(), 1024, PMEM_FILE_CREATE,
+                    0666, &mapped_len, &is_pmem)) != NULL) {
             pmem_addr += 24;
             fId2PmAddr[fid] = pmem_addr;
         }        
@@ -92,7 +93,7 @@ void PAllocator::initFilePmemAddr() {
 // get the pmem address of the target PPointer from the map fId2PmAddr
 char* PAllocator::getLeafPmemAddr(PPointer p) {
     uint64_t address = p.fileId;
-    if(fId2PmAddr.find(address))
+    if(fId2PmAddr.find(address) != fId2PmAddr.end())
         return fId2PmAddr[address];
     return NULL;
 }
@@ -102,8 +103,8 @@ char* PAllocator::getLeafPmemAddr(PPointer p) {
 bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
     // TODO
     uint64_t address = p.fileId;
-    if(fId2PmAddr.find(address)){
-        *pmem_addr = fId2PmAddr[address];
+    if(fId2PmAddr.find(address) != fId2PmAddr.end()){
+        pmem_addr = fId2PmAddr[address];
         return true;
     }
     return false;
@@ -136,7 +137,7 @@ bool PAllocator::ifLeafExist(PPointer p) {
     // TODO
     uint64_t fid = p.fileId, offset = p.offset;
     char * pmem_addr;
-    if (fId2PmAddr.find(fid)) {
+    if (fId2PmAddr.find(fid)  != fId2PmAddr.end()) {
         if (offset < 16)
             return true;
     }
