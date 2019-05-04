@@ -6,15 +6,15 @@
 1. Ubuntu 18.04
 2. 配置模拟NVM
 3. 安装PMDK的libpmem库
-4. 编译安装LevelDB
+4. [编译安装LevelDB](https://github.com/google/leveldb)
 5. c++ 11标准编译
 
-### 部署步骤
+### 部署步骤（注：有链接教大家简单安装环境）
 1. [配置模拟NVM](https://software.intel.com/zh-cn/articles/how-to-emulate-persistent-memory-on-an-intel-architecture-server)
 
 2. 安装[PMDK的libpmem库](http://pmem.io/pmdk/libpmem/)
 
-3. 编译安装[LevelDB](https://github.com/google/leveldb)
+3. 编译安装[LevelDB](https://blog.csdn.net/Arcpii/article/details/85930702)
 
 ### 目录结构描述
 ```
@@ -75,8 +75,12 @@
 3. LevelDB的使用以及测试，对应lycsb.cpp的实现和运行。注：测试levelDB的性能，方便与之后的系统比较。
 
 ### V1 版本使用说明
-首先需进入到Programming-FPTree文件夹，执行make命令，生成相关可执行文件。
-接着执行相关可执行文件，测试功能。
+首先需进入到Programming-FPTree文件夹，测试步骤：
+1. 进入src文件夹，执行make命令，生成相关可执行文件存放于bin文件夹，进入bin文件夹，执行lycsb文件，测试levelDB的性能。
+2. 退回到Programming-FPTree文件夹，进入test文件夹，执行make命令，测试内存分配的实现效果。
+
+### 注意事项：
+1. 需要建立"/mnt/pmemdir/testdb文件夹，同时需要执行sudo chmod /mnt/pmemdir 0666命令修改pmemdir的权限。
 
 ### 作者列表
 黄世明 何思远 黄善恒
