@@ -1,5 +1,6 @@
 #include"utility/p_allocator.h"
 #include<iostream>
+#include <fstream>
 using namespace std;
 
 // the file that store the information of allocator
@@ -30,16 +31,44 @@ PAllocator::PAllocator() {
     // judge if the catalog exists
     if (allocatorCatalog.is_open() && freeListFile.is_open()) {
         // exist
-        // TODO
+        // TODO:
+        char* pmem_addr;
+        size_t maplen;
+        int is_pmem;
+        pmem_addr = (char*)pmem_map_file(allocatorCatalogPath.c_str(), 1024, PMEM_FILE_CREATE, 
+        0666, &maplen, &is_pmem);
+        this->maxFileId =  *(uint64_t*)pmem_addr;
+        this->freeNum = *(uint64_t*)(pmem_addr + 8);
+        this->startLeaf = *(PPointer*)(pmem_addr + 16);
+        pmem_unmap(pmem_addr, maplen);
+        pmem_addr = (char*)pmem_map_file(freeListPath.c_str(), 1024, PMEM_FILE_CREATE, 
+        0666, &maplen, &is_pmem);
+        PPointer tmp;
+        for (int i = 0; i < this->freeNum; i ++) {
+            tmp = *(PPointer*)(pmem_addr + i * sizeof(PPointer));
+            this->freeList.push_back(tmp);
+        }
+
     } else {
         // not exist, create catalog and free_list file, then open.
-        // TODO
+        // TODO:
+        allocatorCatalog.open(allocatorCatalogPath.c_str());
+        freeListFile.open(freeListPath.c_str());
+        char* pmem_addr;
+        size_t maplen;
+        int is_pmem;
+        pmem_addr = (char*)pmem_map_file(allocatorCatalogPath.c_str(), 1024, PMEM_FILE_CREATE, 
+        0666, &maplen, &is_pmem);
+        this->maxFileId =  *(uint64_t*)pmem_addr = 1;
+        this->freeNum = *(uint64_t*)(pmem_addr + 8) = 0;
+        this->startLeaf = *(PPointer*)(pmem_addr + 16) = PPointer();
+        pmem_unmap(pmem_addr, maplen);
     }
     this->initFilePmemAddr();
 }
 
 PAllocator::~PAllocator() {
-    // TODO
+    // TODO:
 }
 
 // memory map all leaves to pmem address, storing them in the fId2PmAddr
