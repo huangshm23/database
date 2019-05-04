@@ -1,14 +1,7 @@
 #include"utility/p_allocator.h"
 #include<iostream>
-#include<sstream>
-#include<string>
-#include<cstring>
-#include<fstream>
+#include <fstream>
 using namespace std;
-
-#define PMEM_LEN 4096
-size_t mapped_len;
-int is_pmem;
 
 // the file that store the information of allocator
 const string P_ALLOCATOR_CATALOG_NAME = "p_allocator_catalog";
@@ -47,16 +40,16 @@ PAllocator::PAllocator() {
         while(sin_allocator >> tmp){
             switch(account){
                 case 0:
-                    this->maxFileId = strtoull(tmp, NULL, 0);
+                    this->maxFileId = strtoull(tmp.c_str(), NULL, 0);
                     break;
                 case 1:
-                    this->freeNum = strtoull(tmp, NULL, 0);
+                    this->freeNum = strtoull(tmp.c_str(), NULL, 0);
                     break;
                 case 2:
                     PPointer pptmp;
-                    pptmp.fileId = strtoull(tmp, NULL, 0);
+                    pptmp.fileId = strtoull(tmp.c_str(), NULL, 0);
                     sin_allocator >> tmp
-                    pptmp.offset = strtoull(tmp, NULL, 0);
+                    pptmp.offset = strtoull(tmp.c_str(), NULL, 0);
                     break;
                 default:
                     break;
@@ -92,32 +85,30 @@ PAllocator::PAllocator() {
 
 PAllocator::~PAllocator() {
     // TODO:
-    persistCatalog();
+    this->persistCatalog();
 }
 
 // memory map all leaves to pmem address, storing them in the fId2PmAddr
 void PAllocator::initFilePmemAddr() {
-    // TODO:
-    int account = 1, fd;
+    // TODO
     uint64_t fid = 1;
     char * pmem_addr;
-    while(fid < maxFileId){
-        if ((fd = open(DATA_DIR + account, O_CREAT|O_RDWR, 0666)) < 0)
-            break;
-        if ((pmem_addr = pmem_map(fd)) == NULL) 
-            break;
-        else{
+    size_t mapped_len;
+    int is_pmem;
+    while (fid < this->maxFileId) {
+        if ((pmem_addr = (char *)pmem_map_file( (DATA_DIR + to_string(fid)).c_str(), 1024, PMEM_FILE_CREATE,
+                    0666, &mapped_len, &is_pmem)) != NULL) {
+            pmem_addr += 24;
             fId2PmAddr[fid] = pmem_addr;
-            ++fid;
-        }
+        }        
+        ++ fid;
     }
 }
 
 // get the pmem address of the target PPointer from the map fId2PmAddr
-char* PAllocator::getLeafPmemAddr(PPointer p) { // leaf in a leafgroup 
-    // TODO:
+char* PAllocator::getLeafPmemAddr(PPointer p) {
     uint64_t address = p.fileId;
-    if(fId2PmAddr.find(address))
+    if(fId2PmAddr.find(address) != fId2PmAddr.end())
         return fId2PmAddr[address];
     return NULL;
 }
@@ -125,32 +116,36 @@ char* PAllocator::getLeafPmemAddr(PPointer p) { // leaf in a leafgroup
 // get and use a leaf for the fptree leaf allocation
 // return 
 bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
-    // TODO:
-    uint64_t address = p.fileId;
-    if(fId2PmAddr.find(address)){
-        *pmem_addr = fId2PmAddr[address];
-        return true;
+    // TODO
+    if (freeList.size() == 0) {
+        if (!newLeafGroup()) {
+            return false;
+        }
     }
-    return false;
+    p = freeList[0];
+    pmem_addr = getLeafPmemAddr(p);
+    vector<PPointer>::iterator it = freeList.begin();
+    freeList.erase(it);
+    return true;
 }
 
 bool PAllocator::ifLeafUsed(PPointer p) {
-    // TODO:
-    uint64_t fid = p.fileId, offset = p.offset, result;
-    ifstream fin(DATA_DIR + fid); // open leafgroup file according to fileID not pmem_address
-    string s,tmp;
-    getline(fin, s);
-    istringstream st(s);
-    for(uint64_t i = 0; i < offset ; ++i)
-        st >> tmp;
-    st >> result;//bitmap corresponding to p.offset
-    if(result)
-        return true;
-    return false;
+    // TODO
+     // open leafgroup file according to fileID not pmem_address
+    if(!ifLeafExist(p))
+        return false;
+    for (uint i = 0; i < freeList.size(); ++ i) {
+        if (freeList[i] == p) {
+            return false;
+        }
+    }
+    return true;
 }
 
-bool PAllocator::ifLeafFree(PPointer p) {  //anything differ from ifLeafUsed?
-    // TODO:
+bool PAllocator::ifLeafFree(PPointer p) {
+    // TODO
+    if(!ifLeafExist(p))
+        return false;
     if(ifLeafUsed(p))
         return false;
     return true;
@@ -158,19 +153,12 @@ bool PAllocator::ifLeafFree(PPointer p) {  //anything differ from ifLeafUsed?
 
 // judge whether the leaf with specific PPointer exists. 
 bool PAllocator::ifLeafExist(PPointer p) {
-    // TODO:
-    uint64_t fid = p.fileId, offset = p.offset, result;
-    ifstream fin(DATA_DIR + fid); 
-    string s,tmp;
-    getline(fin, s);
-    uint64_t account = 0;
-    istringstream st(s);
-    while(st >> tmp)
-        ++account;
-    if(!account)
-        return false;
-    else if((account - 1) / 2 >= offset) 
-        return true;
+    // TODO
+    uint64_t fid = p.fileId, offset = p.offset;
+    if (fId2PmAddr.find(fid)  != fId2PmAddr.end()) {
+        if (offset < 16)
+            return true;
+    }
     return false;
 }
 
@@ -197,26 +185,35 @@ bool PAllocator::freeLeaf(PPointer p) {
     return true;
 }
 
+
 bool PAllocator::persistCatalog(){ // writeback
     // TODO:
-    ofstream allocatorCatalog(allocatorCatalogPath);
-    ofstream freeListFile(freeListPath);
-    if(allocatorCatalog.is_open() && freeListFile.is_open()){
-        allocatorCatalog  << this->maxFileId << " " << this->freeNum  << " "
-            << this->startLeaf.fileId << " " << this->startLeaf.offset  ;
-        freeListFile << " | freeList{";
-        int account = 1;
-        for(auto vtmp: this->freeList){
-            cout << "(" << vtmp.fileId << "," << vtmp.offset << ")" << account;
-            ++account;
-            if(account <= this->freeList.size())
-                cout << ",";
-        }
-        freeListFile << "}";
-        allocatorCatalog.close();
-        freeListFile.close();
+    char *pmemaddr_allo, *pmemaddr_free;
+    if ((pmemaddr_allo = pmem_map_file(allocatorCatalogPath, PMEM_LEN, PMEM_FILE_CREATE,
+                0666, &mapped_len_allo, &is_pmem_allo)) == NULL) 
+        return false;
+    if ((pmemaddr_free = pmem_map_file(freeListPath, PMEM_LEN, PMEM_FILE_CREATE,
+                0666, &mapped_len_free, &is_pmem_free)) == NULL) 
+        return false;
+    string string_allo, string_free;
+    string_allo = string_free = "";
+    string_allo =  to_string(this->maxFileId) + " " + to_string(this->freeNum)  + " " 
+                + to_string(this->startLeaf.fileId) + " " + to_string(this->startLeaf.offset);
+    strcpy(pmemaddr_allo, string_allo);
+    if (is_pmem_allo)
+        pmem_persist(pmemaddr_allo, mapped_len_allo);
+    else
+        pmem_msync(pmemaddr_allo, mapped_len_allo);
+    
+    for(auto vtmp: this->freeList){
+        pmemaddr_free += "" + to_string(vtmp.fileId) + " " + to_string(vtmp.offset) + " ";
     }
-    return false;
+    strcpy(pmemaddr_free, string_free);
+    if (is_pmem_free)
+        pmem_persist(pmemaddr_free, mapped_len_free);
+    else
+        pmem_msync(pmemaddr_free, mapped_len_free);
+    return true;
 }
 
 /*
@@ -228,9 +225,29 @@ bool PAllocator::newLeafGroup() { // wtf is this doing? where is structrue leafg
     // TODO:
     char * pmem_addr;
     uint64_t curfid = maxFileId + 1;
+    size_t mapped_len;
+    int is_pmem;
     if( (pmem_addr = pmem_map_file(DATA_DIR + curfid, PMEM_LEN, PMEM_FILE_CREATE,
                     0666, &mapped_len, &is_pmem)) != NULL ){
         ++maxFileId;
+        freeNum += 16;
+        for(uint64_t i = 0 ;i < 16; ++i){
+            PPointer tmp;
+            tmp.fileId = curfid;
+            tmp.offset = i;
+            freeList.push_back(tmp);
+        }
+        string string_group = "";
+        uint64_t used_num = 0;
+        string_group += to_string(used_num) + " ";
+        string bitmap = "00000000";
+        for(int i = 0 ; i < 32; ++i)
+            string_group += bitmap +" ";
+        strcpy(pmem_addr, string_group);
+        if (is_pmem)
+            pmem_persist(pmem_addr, mapped_len);
+        else
+            pmem_msync(pmem_addr, mapped_len);
         return true;
     }
     return false;
