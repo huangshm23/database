@@ -32,37 +32,53 @@ PAllocator::PAllocator() {
     if (allocatorCatalog.is_open() && freeListFile.is_open()) {
         // exist
         // TODO:
-        char* pmem_addr;
-        size_t maplen;
-        int is_pmem;
-        pmem_addr = (char*)pmem_map_file(allocatorCatalogPath.c_str(), 1024, PMEM_FILE_CREATE, 
-        0666, &maplen, &is_pmem);
-        this->maxFileId =  *(uint64_t*)pmem_addr;
-        this->freeNum = *(uint64_t*)(pmem_addr + 8);
-        this->startLeaf = *(PPointer*)(pmem_addr + 16);
-        pmem_unmap(pmem_addr, maplen);
-        pmem_addr = (char*)pmem_map_file(freeListPath.c_str(), 1024, PMEM_FILE_CREATE, 
-        0666, &maplen, &is_pmem);
-        PPointer tmp;
-        for (int i = 0; i < this->freeNum; i ++) {
-            tmp = *(PPointer*)(pmem_addr + i * sizeof(PPointer));
-            this->freeList.push_back(tmp);
+        //initilize allocatorCatalog
+        string s, tmp;
+        int account = 0;
+        getline(allocatorCatalog, s));
+        istringstream sin_allocator(s);
+        while(sin_allocator >> tmp){
+            switch(account){
+                case 0:
+                    this->maxFileId = strtoull(tmp.c_str(), NULL, 0);
+                    break;
+                case 1:
+                    this->freeNum = strtoull(tmp.c_str(), NULL, 0);
+                    break;
+                case 2:
+                    PPointer pptmp;
+                    pptmp.fileId = strtoull(tmp.c_str(), NULL, 0);
+                    sin_allocator >> tmp
+                    pptmp.offset = strtoull(tmp.c_str(), NULL, 0);
+                    break;
+                default:
+                    break;
+            }
+            ++account;
         }
-
+        string fid, offset;
+        int index = 0;
+        while(getline(freeListFile, s)){
+            istringstream sin_freeList(s);
+            while(s >> tmp){
+                PPointer pptmp;
+                fid = tmp;
+                s >> tmp;
+                offset = tmp;
+                pptmp.fileId = strtoull(fid, NULL, 0);
+                pptmp.offset = strtoull(offset, NULL, 0);
+                freeList.push_back(pptmp);
+            }
+        }
     } else {
         // not exist, create catalog and free_list file, then open.
         // TODO:
+        pmem_map_file(allocatorCatalogPath.c_str(), PMEM_LEN, PMEM_FILE_CREATE,
+                    0666, &mapped_len, &is_pmem);
+        pmem_map_file(freeListFile.c_str(), PMEM_LEN, PMEM_FILE_CREATE,
+                    0666, &mapped_len, &is_pmem);
         allocatorCatalog.open(allocatorCatalogPath.c_str());
-        freeListFile.open(freeListPath.c_str());
-        char* pmem_addr;
-        size_t maplen;
-        int is_pmem;
-        pmem_addr = (char*)pmem_map_file(allocatorCatalogPath.c_str(), 1024, PMEM_FILE_CREATE, 
-        0666, &maplen, &is_pmem);
-        this->maxFileId =  *(uint64_t*)pmem_addr = 1;
-        this->freeNum = *(uint64_t*)(pmem_addr + 8) = 0;
-        this->startLeaf = *(PPointer*)(pmem_addr + 16) = PPointer();
-        pmem_unmap(pmem_addr, maplen);
+        freeListFile.open(freeListFile.c_str());
     }
     this->initFilePmemAddr();
 }
@@ -149,9 +165,34 @@ bool PAllocator::freeLeaf(PPointer p) {
     return false;
 }
 
-bool PAllocator::persistCatalog() {
-    // TODO
-    return false;
+bool PAllocator::persistCatalog(){ // writeback
+    // TODO:
+    char *pmemaddr_allo, *pmemaddr_free;
+    if ((pmemaddr_allo = pmem_map_file(PATH, PMEM_LEN, PMEM_FILE_CREATE,
+                0666, &mapped_len_allo, &is_pmem_allo)) == NULL) 
+        return false;
+    if ((pmemaddr_free = pmem_map_file(PATH, PMEM_LEN, PMEM_FILE_CREATE,
+                0666, &mapped_len_free, &is_pmem_free)) == NULL) 
+        return false;
+    string string_allo, string_free;
+    string_allo = string_free = "";
+    string_allo = "" + to_string(this->maxFileId) + " " + to_string(this->freeNum)  + " " 
+                + to_string(this->startLeaf.fileId) + " " + to_string(this->startLeaf.offset);
+    strcpy(pmemaddr_allo, string_allo);
+    if (is_pmem_allo)
+        pmem_persist(pmemaddr_allo, mapped_len_allo);
+    else
+        pmem_msync(pmemaddr_allo, mapped_len_allo);
+    
+    for(auto vtmp: this->freeList){
+        pmemaddr_free += "" + to_string(vtmp.fileId) + " " + to_string(vtmp.offset) + " ";
+    }
+    strcpy(pmemaddr_free, string_free);
+    if (is_pmem_free)
+        pmem_persist(pmemaddr_free, mapped_len_free);
+    else
+        pmem_msync(pmemaddr_free, mapped_len_free);
+    return true;
 }
 
 /*
