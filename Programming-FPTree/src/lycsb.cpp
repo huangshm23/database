@@ -62,6 +62,7 @@ int main()
     for (int i = 0; i < inserted; i ++) {
         snprintf(buf, (size_t)9, "%lu", key[i]);
         status = db->Put(leveldb::WriteOptions(), buf, buf);
+        assert(status.ok());
     }
     delete[] buf;
 
@@ -113,17 +114,20 @@ int main()
             inserted ++;
             snprintf(buf, (size_t)9, "%lu", key[i]);
             status = db->Put(leveldb::WriteOptions(), buf, buf);
+            assert(status.ok());
         }
         else if (tmp[i] == 'R') {
             queried ++;
             snprintf(buf, (size_t)9, "%lu", key[i]);
             status = db->Get(leveldb::ReadOptions(), buf, &tmp2);
+            assert(status.ok());
         }
         else if (tmp[i] == 'U') { //Update mean to insert or get
             snprintf(buf, (size_t)9, "%lu", key[i]);
             status = db->Get(leveldb::ReadOptions(), buf, &tmp2);
             if (!status.ok()) {
                 status = db->Put(leveldb::WriteOptions(), buf, buf);
+                assert(status.ok());
             }
         }
     }
