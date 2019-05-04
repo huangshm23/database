@@ -45,11 +45,26 @@ PAllocator::~PAllocator() {
 // memory map all leaves to pmem address, storing them in the fId2PmAddr
 void PAllocator::initFilePmemAddr() {
     // TODO
+    int account = 1, fd;
+    uint64_t fid = 1;
+    char * pmem_addr;
+    size_t mapped_len;
+    int is_pmem;
+    while (fid < this->maxFileId) {
+        if (pmem_addr = pmem_map_file( DATA_DIR + fid, PMEM_LEN, PMEM_FILE_CREATE,
+                    0666, &mapped_len, &is_pmem) != NULL) {
+            pmem_addr += 24;
+            fId2PmAddr[fid] = pmem_addr;
+        }        
+        ++ fid;
+    }
 }
 
 // get the pmem address of the target PPointer from the map fId2PmAddr
 char* PAllocator::getLeafPmemAddr(PPointer p) {
-    // TODO
+    uint64_t address = p.fileId;
+    if(fId2PmAddr.find(address))
+        return fId2PmAddr[address];
     return NULL;
 }
 
@@ -57,27 +72,52 @@ char* PAllocator::getLeafPmemAddr(PPointer p) {
 // return 
 bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
     // TODO
+    uint64_t address = p.fileId;
+    if(fId2PmAddr.find(address)){
+        *pmem_addr = fId2PmAddr[address];
+        return true;
+    }
     return false;
 }
 
 bool PAllocator::ifLeafUsed(PPointer p) {
     // TODO
-    return false;
+     // open leafgroup file according to fileID not pmem_address
+    if(!ifLeafExist(p))
+        return false;
+    for (int i = 0; i < freeList.size(); ++ i) {
+        if (freeList[i] == p) {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool PAllocator::ifLeafFree(PPointer p) {
     // TODO
-    return false;
+    if(!ifLeafExist(p))
+        return false;
+    if(ifLeafUsed(p))
+        return false;
+    return true;
 }
 
 // judge whether the leaf with specific PPointer exists. 
 bool PAllocator::ifLeafExist(PPointer p) {
     // TODO
+    uint64_t fid = p.fileId, offset = p.offset;
+    char * pmem_addr;
+    if (fId2PmAddr.find(fid)) {
+        if (offset < 16)
+            return true;
+    }
+    return false;
 }
 
 // free and reuse a leaf
 bool PAllocator::freeLeaf(PPointer p) {
     // TODO
+    
     return false;
 }
 
