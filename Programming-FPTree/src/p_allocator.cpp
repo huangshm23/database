@@ -1,10 +1,14 @@
 #include"utility/p_allocator.h"
 #include<iostream>
 #include<sstream>
+#include<string>
+#include<cstring>
 #include<fstream>
-#include<ifstream>
-#include<ofstraem>
-usin_allocatorg namespace std;
+using namespace std;
+
+#define PMEM_LEN 4096
+size_t mapped_len;
+int is_pmem;
 
 // the file that store the information of allocator
 const string P_ALLOCATOR_CATALOG_NAME = "p_allocator_catalog";
@@ -20,26 +24,6 @@ PAllocator* PAllocator::getAllocator() {
     return PAllocator::pAllocator;
 }
 
-int findComma(string s, int sindex){
-    for(int i = sindex; i < s.size(); ++i)
-        if(s[i] == ',')
-            return i;
-    return -1;
-}
-
-int findLeftBracket(string s, int sindex){
-    for(int i = sindex; i < s.size(); ++i)
-        if(s[i] == '(')
-            return i;
-    return -1;
-}
-
-int findRightBracket(string s, int sindex){
-    for(int i = sindex; i < s.size(); ++i)
-        if(s[i] == ')')
-            return i;
-    return -1;
-}
 /* data storing structure of allocator
    In the catalog file, the data structure is listed below
    | maxFileId(8 bytes) | freeNum = m | treeStartLeaf(the PPointer) |
@@ -58,63 +42,49 @@ PAllocator::PAllocator() {
         //initilize allocatorCatalog
         string s, tmp;
         int account = 0;
-        getline(allocatorCatalog, s))
+        getline(allocatorCatalog, s));
         istringstream sin_allocator(s);
         while(sin_allocator >> tmp){
-            if(tmp == "|" || tmp == "freeNum" || tmp == "=")
-                continue;
             switch(account){
                 case 0:
-                    this->maxFileId = (uint64_t)tmp;
+                    this->maxFileId = strtoull(tmp, NULL, 0);
                     break;
                 case 1:
-                    this->freeNum = (uint64_t)tmp;
+                    this->freeNum = strtoull(tmp, NULL, 0);
                     break;
                 case 2:
                     PPointer pptmp;
-                    pptmp.fileId = (uint64_t)tmp;
-                    if(sin_allocator >> tmp && tmp != "|")
-                        pptmp.offset = (uint64_t)tmp;
-                    else
-                        pptmp.offset = 0;
+                    pptmp.fileId = strtoull(tmp, NULL, 0);
+                    sin_allocator >> tmp
+                    pptmp.offset = strtoull(tmp, NULL, 0);
+                    break;
                 default:
                     break;
             }
             ++account;
         }
-        int index , left , right, comma;
-        index = left = right = comma = 0;
         string fid, offset;
+        int index = 0;
         while(getline(freeListFile, s)){
             istringstream sin_freeList(s);
             while(s >> tmp){
-                if(tmp == "|")
-                    continue;
-                while(left != -1 && right != -1 && comma != -1){
-                    left = findLeftBracket(tmp, index);
-                    comma = findComma(tmp, left + 1);
-                    right = findRightBracket(tmp, comma+1);
-                    index = right + 1;
-                    fid = tmp.substr(left, comma);
-                    offset = tmp.substr(comma + 1, right);
-                    PPointer pptmp;
-                    pptmp.fileId = (uint64_t)fid;
-                    pptmp.offset = (uint64_t)offset;
-                    this->freeList.push_back(pptmp);
-                } 
+                PPointer pptmp;
+                fid = tmp;
+                s >> tmp;
+                offset = tmp;
+                pptmp.fileId = strtoull(fid, NULL, 0);
+                pptmp.offset = strtoull(offset, NULL, 0);
+                freeList.push_back(pptmp);
             }
         }
     } else {
         // not exist, create catalog and free_list file, then open.
         // TODO:
-        fstream fn;
-        fn.open(allocatorCatalogPath.c_str(), ofstream::out);
-        fn.open(freeListFile.c_str(), ofsream::out);
-        allocatorCatalog.close();
-        allocatorCatalog.clear();
-        allocatorCatalog.open(allocatorCatalogPath.c_str())
-        freeListFile.close();
-        freeListFile.clear();
+        pmem_map_file(allocatorCatalogPath.c_str(), PMEM_LEN, PMEM_FILE_CREATE,
+                    0666, &mapped_len, &is_pmem);
+        pmem_map_file(freeListFile.c_str(), PMEM_LEN, PMEM_FILE_CREATE,
+                    0666, &mapped_len, &is_pmem);
+        allocatorCatalog.open(allocatorCatalogPath.c_str());
         freeListFile.open(freeListFile.c_str());
     }
     this->initFilePmemAddr();
@@ -128,16 +98,25 @@ PAllocator::~PAllocator() {
 // memory map all leaves to pmem address, storing them in the fId2PmAddr
 void PAllocator::initFilePmemAddr() {
     // TODO:
-    for(auto vtmp : freeList){
-        uint64_t address = vtmp.fileId + vtmp.offset;
-        fId2PmAddr[address] = address; // key is also the value
+    int account = 1, fd;
+    uint64_t fid = 1;
+    char * pmem_addr;
+    while(fid < maxFileId){
+        if ((fd = open(DATA_DIR + account, O_CREAT|O_RDWR, 0666)) < 0)
+            break;
+        if ((pmem_addr = pmem_map(fd)) == NULL) 
+            break;
+        else{
+            fId2PmAddr[fid] = pmem_addr;
+            ++fid;
+        }
     }
 }
 
 // get the pmem address of the target PPointer from the map fId2PmAddr
-char* PAllocator::getLeafPmemAddr(PPointer p) {
+char* PAllocator::getLeafPmemAddr(PPointer p) { // leaf in a leafgroup 
     // TODO:
-    uint64_t address = p.fileId + p.offset;
+    uint64_t address = p.fileId;
     if(fId2PmAddr.find(address))
         return fId2PmAddr[address];
     return NULL;
@@ -147,7 +126,7 @@ char* PAllocator::getLeafPmemAddr(PPointer p) {
 // return 
 bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
     // TODO:
-    uint64_t address = p.fileId + p.offset;
+    uint64_t address = p.fileId;
     if(fId2PmAddr.find(address)){
         *pmem_addr = fId2PmAddr[address];
         return true;
@@ -157,27 +136,40 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
 
 bool PAllocator::ifLeafUsed(PPointer p) {
     // TODO:
-    uint64_t address = p.fileId + p.offset;
-    if(fId2PmAddr.find(address))
-        if(fId2PmAddr[address] != NULL)
-            return true;
+    uint64_t fid = p.fileId, offset = p.offset, result;
+    ifstream fin(DATA_DIR + fid); // open leafgroup file according to fileID not pmem_address
+    string s,tmp;
+    getline(fin, s);
+    istringstream st(s);
+    for(uint64_t i = 0; i < offset ; ++i)
+        st >> tmp;
+    st >> result;//bitmap corresponding to p.offset
+    if(result)
+        return true;
     return false;
 }
 
 bool PAllocator::ifLeafFree(PPointer p) {  //anything differ from ifLeafUsed?
     // TODO:
-    uint64_t address = p.fileId + p.offset;
-    if(fId2PmAddr.find(address))
-        if(fId2PmAddr[address] != NULL)
-            return false;
+    if(ifLeafUsed(p))
+        return false;
     return true;
 }
 
 // judge whether the leaf with specific PPointer exists. 
 bool PAllocator::ifLeafExist(PPointer p) {
     // TODO:
-    uint64_t address = p.fileId + p.offset;
-    if(fId2PmAddr.find(address))
+    uint64_t fid = p.fileId, offset = p.offset, result;
+    ifstream fin(DATA_DIR + fid); 
+    string s,tmp;
+    getline(fin, s);
+    uint64_t account = 0;
+    istringstream st(s);
+    while(st >> tmp)
+        ++account;
+    if(!account)
+        return false;
+    else if((account - 1) / 2 >= offset) 
         return true;
     return false;
 }
@@ -185,13 +177,24 @@ bool PAllocator::ifLeafExist(PPointer p) {
 // free and reuse a leaf
 bool PAllocator::freeLeaf(PPointer p) {
     // TODO:
-    uint64_t address = p.fileId + p.offset;
-    if(fId2PmAddr.find(address)){
-        if(fId2PmAddr[address] != NULL)
-            fId2PmAddr[address] = NULL;
-        return true;
-    }
-    return false;
+    if(!ifLeafExist(p))
+        return false;
+    uint64_t fid = p.fileId, offset = p.offset, result;
+    ifstream fin(DATA_DIR + fid);
+    string s[33], s, tmp;
+    int index = 0;
+    getline(fin,s);
+    istringstream st(s);
+    while(st >> tmp)
+        s[index++] = tmp;
+    s[offset] = "00000000"; //free a leaf
+    ofstream fout(DATA_DIR + fid);
+    for(int i = 0 ; i < index; ++i){
+        fout << s[i] << " ";
+    fout.close();
+    freeList.push_back(p);
+    ++freeNUm;
+    return true;
 }
 
 bool PAllocator::persistCatalog(){ // writeback
@@ -199,8 +202,8 @@ bool PAllocator::persistCatalog(){ // writeback
     ofstream allocatorCatalog(allocatorCatalogPath);
     ofstream freeListFile(freeListPath);
     if(allocatorCatalog.is_open() && freeListFile.is_open()){
-        allocatorCatalog << "| " << this->maxFileId << " | freeNum = " << this->freeNum 
-            << " | " << this->startLeaf.fileId << " " << this->startLeaf.offset << " |" ;
+        allocatorCatalog  << this->maxFileId << " " << this->freeNum  << " "
+            << this->startLeaf.fileId << " " << this->startLeaf.offset  ;
         freeListFile << " | freeList{";
         int account = 1;
         for(auto vtmp: this->freeList){
@@ -209,7 +212,7 @@ bool PAllocator::persistCatalog(){ // writeback
             if(account <= this->freeList.size())
                 cout << ",";
         }
-        freeListFile << "} |";
+        freeListFile << "}";
         allocatorCatalog.close();
         freeListFile.close();
     }
@@ -223,5 +226,12 @@ bool PAllocator::persistCatalog(){ // writeback
 // create a new leafgroup, one file per leafgroup
 bool PAllocator::newLeafGroup() { // wtf is this doing? where is structrue leafgroup?
     // TODO:
+    char * pmem_addr;
+    uint64_t curfid = maxFileId + 1;
+    if( (pmem_addr = pmem_map_file(DATA_DIR + curfid, PMEM_LEN, PMEM_FILE_CREATE,
+                    0666, &mapped_len, &is_pmem)) != NULL ){
+        ++maxFileId;
+        return true;
+    }
     return false;
 }
