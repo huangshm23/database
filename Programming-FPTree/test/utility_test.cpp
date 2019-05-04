@@ -130,6 +130,7 @@ TEST(PAllocatorTest, FreeSingleLeaf) {
     EXPECT_EQ(p->freeLeaf(leaf), true);
     EXPECT_EQ(p->getLeaf(leaf, pmem_addr), true);
     EXPECT_EQ(leaf.offset, offset);
+    removeFile();
 }
 
 TEST(PAllocatorTest, GetLeaf) {

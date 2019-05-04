@@ -69,13 +69,12 @@ PAllocator::PAllocator() {
 
 PAllocator::~PAllocator() {
     // TODO:
-    this->persistCatalog;
+    this->persistCatalog();
 }
 
 // memory map all leaves to pmem address, storing them in the fId2PmAddr
 void PAllocator::initFilePmemAddr() {
     // TODO
-    int account = 1, fd;
     uint64_t fid = 1;
     char * pmem_addr;
     size_t mapped_len;
@@ -115,7 +114,7 @@ bool PAllocator::ifLeafUsed(PPointer p) {
      // open leafgroup file according to fileID not pmem_address
     if(!ifLeafExist(p))
         return false;
-    for (int i = 0; i < freeList.size(); ++ i) {
+    for (uint i = 0; i < freeList.size(); ++ i) {
         if (freeList[i] == p) {
             return false;
         }
@@ -136,7 +135,6 @@ bool PAllocator::ifLeafFree(PPointer p) {
 bool PAllocator::ifLeafExist(PPointer p) {
     // TODO
     uint64_t fid = p.fileId, offset = p.offset;
-    char * pmem_addr;
     if (fId2PmAddr.find(fid)  != fId2PmAddr.end()) {
         if (offset < 16)
             return true;
