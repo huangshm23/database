@@ -117,12 +117,16 @@ char* PAllocator::getLeafPmemAddr(PPointer p) {
 // return 
 bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
     // TODO
-    uint64_t address = p.fileId;
-    if(fId2PmAddr.find(address) != fId2PmAddr.end()){
-        pmem_addr = fId2PmAddr[address];
-        return true;
+    if (freeList.size() == 0) {
+        if (!newLeafGroup()) {
+            return false;
+        }
     }
-    return false;
+    p = freeList[0];
+    pmem_addr = getLeafPmemAddr(p);
+    vector<PPointer>::iterator it = freeList.begin();
+    freeList.erase(it);
+    return true;
 }
 
 bool PAllocator::ifLeafUsed(PPointer p) {
@@ -193,7 +197,7 @@ bool PAllocator::persistCatalog(){ // writeback
         return false;
     string string_allo, string_free;
     string_allo = string_free = "";
-    string_allo =  to_string(this->maxFileId) + " " + to_string(this->freeNum)  + " " 
+    string_allo = "" + to_string(this->maxFileId) + " " + to_string(this->freeNum)  + " " 
                 + to_string(this->startLeaf.fileId) + " " + to_string(this->startLeaf.offset);
     strcpy(pmemaddr_allo, string_allo);
     if (is_pmem_allo)
@@ -221,29 +225,9 @@ bool PAllocator::newLeafGroup() { // wtf is this doing? where is structrue leafg
     // TODO:
     char * pmem_addr;
     uint64_t curfid = maxFileId + 1;
-    size_t mapped_len;
-    int is_pmem;
     if( (pmem_addr = pmem_map_file(DATA_DIR + curfid, PMEM_LEN, PMEM_FILE_CREATE,
                     0666, &mapped_len, &is_pmem)) != NULL ){
         ++maxFileId;
-        freeNum += 16;
-        for(uint64_t i = 0 ;i < 16; ++i){
-            PPointer tmp;
-            tmp.fileId = curfid;
-            tmp.offset = i;
-            freeList.push_back(tmp);
-        }
-        string string_group = "";
-        uint64_t used_num = 0;
-        string_group += to_string(used_num) + " ";
-        string bitmap = "00000000";
-        for(int i = 0 ; i < 32; ++i)
-            string_group += bitmap +" ";
-        strcpy(pmem_addr, string_group);
-        if (is_pmem)
-            pmem_persist(pmem_addr, mapped_len);
-        else
-            pmem_msync(pmem_addr, mapped_len);
         return true;
     }
     return false;
