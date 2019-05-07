@@ -53,51 +53,60 @@ PAllocator::PAllocator() {
     if (allocatorCatalog.is_open() && freeListFile.is_open()) {
         // exist
         // TODO:
-        char* pmem_addr;
-        size_t maplen;
-        int is_pmem;
-        pmem_addr = (char*)pmem_map_file(allocatorCatalogPath.c_str(), sizeof(catalog), PMEM_FILE_CREATE, 
-        0666, &maplen, &is_pmem);
+        char* pmem_addr_allo, *pmem_addr_free;
+        size_t maplen_allo, maplen_free;
+        int is_pmem_allo, is_pmem_free;
+        if((pmem_addr_allo = (char*)pmem_map_file(allocatorCatalogPath.c_str(), sizeof(catalog), PMEM_FILE_CREATE, 
+        0666, &maplen_allo, &is_pmem_allo)) == NULL) {
+            perror("pmem_map_file");
+            exit(1);
+        }
         catalog *tmp;
-        tmp = (catalog*)pmem_addr;
+        tmp = (catalog*)pmem_addr_allo;
         this->maxFileId =  tmp->maxFileId;
         this->freeNum = tmp->freeNum;
         this->startLeaf = tmp->treeStartLeaf;
 
-        pmem_addr = (char*)pmem_map_file(freeListPath.c_str(), 1024, PMEM_FILE_CREATE, 
-        0666, &maplen, &is_pmem);
-        freeList_F *fLF;
-        fLF = (freeList_F*)pmem_addr;
-        for (uint i = 0; i < this->freeNum; i ++) {
-            this->freeList.push_back(fLF->freelist[i]);
+        if((pmem_addr_free = (char*)pmem_map_file(freeListPath.c_str(), 1024, PMEM_FILE_CREATE, 
+        0666, &maplen_free, &is_pmem_free)) == NULL) {
+            perror("pmem_map_file");
+            exit(1);
+        }
+        freeList_F *fLF = NULL;
+        fLF = (freeList_F*)pmem_addr_free;
+        if (fLF != NULL) {
+            for (uint i = 0; i < this->freeNum; i ++) {
+                this->freeList.push_back(fLF->freelist[i]);
+            }
         }
     } else {
         // not exist, create catalog and free_list file, then open.
         // TODO:
         allocatorCatalog.open(allocatorCatalogPath.c_str());
         freeListFile.open(freeListPath.c_str());
-        char* pmem_addr;
-        size_t maplen;
-        int is_pmem;
-        pmem_addr = (char*)pmem_map_file(allocatorCatalogPath.c_str(), sizeof(catalog), PMEM_FILE_CREATE, 
-        0666, &maplen, &is_pmem);
+        char* pmem_addr_allo, *pmem_addr_free;
+        size_t maplen_allo, maplen_free;
+        int is_pmem_allo, is_pmem_free;
+        pmem_addr_allo = (char*)pmem_map_file(allocatorCatalogPath.c_str(), sizeof(catalog), PMEM_FILE_CREATE, 
+        0666, &maplen_allo, &is_pmem_allo);
         catalog *tmp;
-        tmp = (catalog*)pmem_addr;
+        tmp = (catalog*)pmem_addr_allo;
         this->maxFileId =  tmp->maxFileId = 1;
         this->freeNum = tmp->freeNum = 0;
         this->startLeaf = tmp->treeStartLeaf = PPointer();
-        pmem_addr = (char*)pmem_map_file(freeListPath.c_str(), sizeof(freeList_F), PMEM_FILE_CREATE, 
-        0666, &maplen, &is_pmem);
+        pmem_addr_free = (char*)pmem_map_file(freeListPath.c_str(), sizeof(freeList_F), PMEM_FILE_CREATE, 
+        0666, &maplen_free, &is_pmem_free);
         freeList_F tmp_f;
         tmp_f.freelist.clear();
-        pmem_addr = (char*)&tmp_f;
+        pmem_addr_free = (char*)&tmp_f;
     }
-    this->initFilePmemAddr();
+    //this->initFilePmemAddr();
 }
 
 PAllocator::~PAllocator() {
     // TODO:
     this->persistCatalog();
+    PAllocator::pAllocator = NULL;
 }
 
 // memory map all leaves to pmem address, storing them in the fId2PmAddr
@@ -136,7 +145,6 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
             return false;
     }
     p = freeList.back();
-    cout << freeList.size()<< '\n';
 
     if ((pmem_addr = (char *)pmem_map_file( (DATA_DIR + to_string(p.fileId)).c_str(), sizeof(LeafGroup), PMEM_FILE_CREATE,
     0666, &mapped_len, &is_pmem)) == NULL)
@@ -150,6 +158,7 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
     
     freeList.pop_back();
     this->freeNum = freeList.size();
+    this->fId2PmAddr[p.fileId] = pmem_addr;
     return true;
 }
 
