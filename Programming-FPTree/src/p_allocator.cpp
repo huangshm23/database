@@ -128,6 +128,7 @@ char* PAllocator::getLeafPmemAddr(PPointer p) {
 // return 
 bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
     // TODO
+
     int is_pmem;
     size_t mapped_len;
     if (this->freeNum == 0) {
@@ -187,6 +188,7 @@ bool PAllocator::ifLeafExist(PPointer p) {
 
 // free and reuse a leaf
 bool PAllocator::freeLeaf(PPointer p) {
+
     // TODO
     uint64_t fid = p.fileId, offset = p.offset;
     char* pmemaddr;
@@ -201,6 +203,7 @@ bool PAllocator::freeLeaf(PPointer p) {
     }
     return false;
 }
+
 
 bool PAllocator::persistCatalog(){ // writeback
     // TODO:
@@ -250,6 +253,7 @@ bool PAllocator::persistCatalog(){ // writeback
   | usedNum(8b) | bitmap(n * byte) | leaf1 |...| leafn |
 */
 // create a new leafgroup, one file per leafgroup
+
 bool PAllocator::newLeafGroup() {
     // TODO
     uint64_t fid = this->maxFileId;
