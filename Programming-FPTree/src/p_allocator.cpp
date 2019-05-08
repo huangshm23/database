@@ -66,39 +66,44 @@ PAllocator::PAllocator() {
         this->maxFileId =  tmp->maxFileId;
         this->freeNum = tmp->freeNum;
         this->startLeaf = tmp->treeStartLeaf;
-
+        if((pmem_addr_free = (char*)pmem_map_file(freeListPath.c_str(), this->freeNum*sizeof(PPointer), PMEM_FILE_CREATE, 
+        0666, &maplen_free, &is_pmem_free)) == NULL) {
+            perror("pmem_map_file");
+            exit(1);
+        }
+        PPointer *freelist;
+        freelist = (PPointer*)pmem_addr_free;
+        cout << this->freeNum;
+        for (uint i = 0; i < this->freeNum; i ++) {
+            this->freeList.push_back(freelist[i]);
+        }
+    } else {
+        // not exist, create catalog and free_list file, then open.
+        // TODO:
+        // allocatorCatalog.open(allocatorCatalogPath.c_str());
+        // freeListFile.open(freeListPath.c_str());
+        char* pmem_addr_allo, *pmem_addr_free;
+        size_t maplen_allo, maplen_free;
+        int is_pmem_allo, is_pmem_free;
+        if((pmem_addr_allo = (char*)pmem_map_file(allocatorCatalogPath.c_str(), sizeof(catalog), PMEM_FILE_CREATE, 
+        0666, &maplen_allo, &is_pmem_allo)) == NULL) {
+            perror("pmem_map_file");
+            exit(1);
+        }
+        catalog *tmp;
+        tmp = (catalog*)pmem_addr_allo;
+        this->maxFileId =  tmp->maxFileId = 1;
+        this->freeNum = tmp->freeNum = 0;
+        this->startLeaf = tmp->treeStartLeaf;
         if((pmem_addr_free = (char*)pmem_map_file(freeListPath.c_str(), 1024, PMEM_FILE_CREATE, 
         0666, &maplen_free, &is_pmem_free)) == NULL) {
             perror("pmem_map_file");
             exit(1);
         }
-        freeList_F *fLF = NULL;
-        fLF = (freeList_F*)pmem_addr_free;
-        if (fLF != NULL) {
-            for (uint i = 0; i < this->freeNum; i ++) {
-                this->freeList.push_back(fLF->freelist[i]);
-            }
-        }
-    } else {
-        // not exist, create catalog and free_list file, then open.
-        // TODO:
-        allocatorCatalog.open(allocatorCatalogPath.c_str());
-        freeListFile.open(freeListPath.c_str());
-        char* pmem_addr_allo, *pmem_addr_free;
-        size_t maplen_allo, maplen_free;
-        int is_pmem_allo, is_pmem_free;
-        pmem_addr_allo = (char*)pmem_map_file(allocatorCatalogPath.c_str(), sizeof(catalog), PMEM_FILE_CREATE, 
-        0666, &maplen_allo, &is_pmem_allo);
-        catalog *tmp;
-        tmp = (catalog*)pmem_addr_allo;
-        this->maxFileId =  tmp->maxFileId = 1;
-        this->freeNum = tmp->freeNum = 0;
-        this->startLeaf = tmp->treeStartLeaf = PPointer();
-        pmem_addr_free = (char*)pmem_map_file(freeListPath.c_str(), sizeof(freeList_F), PMEM_FILE_CREATE, 
-        0666, &maplen_free, &is_pmem_free);
-        freeList_F tmp_f;
-        tmp_f.freelist.clear();
-        pmem_addr_free = (char*)&tmp_f;
+        PPointer *free_list;
+        free_list = (PPointer*)pmem_addr_free;
+        free_list->fileId = 0;
+        //memcpy(pmem_addr_free, (char*)free_list, maplen_free);
     }
     //this->initFilePmemAddr();
 }
@@ -145,6 +150,7 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
             return false;
     }
     p = freeList.back();
+    cout << p.fileId << ' ' << p.offset << "\n";
 
     if ((pmem_addr = (char *)pmem_map_file( (DATA_DIR + to_string(p.fileId)).c_str(), sizeof(LeafGroup), PMEM_FILE_CREATE,
     0666, &mapped_len, &is_pmem)) == NULL)
@@ -155,7 +161,7 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
     uint64_t off_num = (p.offset - LEAF_GROUP_HEAD) / calLeafSize();
     tmp->usedNum += 1;
     tmp->is_used[off_num] = 1;
-    
+
     freeList.pop_back();
     this->freeNum = freeList.size();
     this->fId2PmAddr[p.fileId] = pmem_addr;
@@ -224,7 +230,7 @@ bool PAllocator::persistCatalog(){ // writeback
     if ((pmemaddr_allo = (char*)pmem_map_file(allocatorCatalogPath.c_str(), sizeof(catalog), PMEM_FILE_CREATE,
                 0666, &mapped_len_allo, &is_pmem_allo)) == NULL) 
         return false;
-    if ((pmemaddr_free = (char*)pmem_map_file(allocatorCatalogPath.c_str(), sizeof(this->freeList), PMEM_FILE_CREATE,
+    if ((pmemaddr_free = (char*)pmem_map_file(allocatorCatalogPath.c_str(), this->freeNum*sizeof(PPointer), PMEM_FILE_CREATE,
                 0666, &mapped_len_free, &is_pmem_free)) == NULL) 
         return false;
     // string string_allo, string_free;
@@ -242,13 +248,14 @@ bool PAllocator::persistCatalog(){ // writeback
     // else
     //     pmem_msync(pmemaddr_allo, mapped_len_allo);
     pmem_unmap(pmemaddr_allo, mapped_len_allo);
-    freeList_F tmp_free;
-    for(auto vtmp: this->freeList){
+    PPointer free_list[this->freeNum];
+    cout << this->freeNum << " " << this->freeList.size();
+    for(uint i = 0; i < this->freeList.size(); i ++){
         //string_free += "" + to_string(vtmp.fileId) + " " + to_string(vtmp.offset) + " ";
-        tmp_free.freelist.push_back(vtmp);
+        free_list[i] = this->freeList[i];
     }
     // strcpy(pmemaddr_free, string_free.c_str());
-    memcpy(pmemaddr_free, (char*)&tmp_free, mapped_len_free);
+    memcpy(pmemaddr_free, (char*)free_list, mapped_len_free);
     // if (is_pmem_free)
     //     pmem_persist(pmemaddr_free, mapped_len_free);
     // else
