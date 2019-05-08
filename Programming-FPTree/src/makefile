@@ -30,7 +30,7 @@ ALL := $(LYCSB) $(YCSB) $(MAIN) $(FPTREE) $(UTILITY) $(PALLOCATOR) $(CLHASH)
 all : $(BIN) $(ALL)
 
 $(MAIN) : main.o $(FPTREE) $(UTILITY) $(PALLOCATOR) $(CLHASH)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@ -lpmem
 
 $(FPTREE) : fptree.cpp $(FPTREE_HEADER_DIR)/fptree.h
 	$(CXX) $(CXXFLAGS) -c $< -I $(HEADER_DIR) -g -o $@
