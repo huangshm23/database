@@ -8,15 +8,18 @@ InnerNode::InnerNode(const int& d, FPTree* const& t, bool _isRoot) {
     this->isRoot = _isRoot;
     this->nKeys = 0;
     this->nChild = 0;
-    if ((this->keys = (Key*)malloc((2 * d + 1) * sizeof(Key))) == NULL)
-        exit(-1);
-    if ((this->childrens = (Node **)malloc((2 * d + 2) * sizeof(Node *))) == NULL)
-        exit(-1);
+    this->degree = d;
+    this->isLeaf = false;
+    this->tree = t;
+    this->keys = new Key[2 * d + 1];
+    this->childrens = new Node *[2 * d + 2];
 }
 
 // delete the InnerNode
 InnerNode::~InnerNode() {
     // TODO
+    delete [] this->keys;
+    delete [] this->childrens;
 }
 
 // binary search the first key in the innernode larger than input key
@@ -24,7 +27,7 @@ int InnerNode::findIndex(const Key& k) {
     // TODO
     int low, high, key;
     low = 0;
-    high = this->nKeys;
+    high = this->nKeys - 1;
     while (low <= high)
     {   
         key = (low + high) / 2;
@@ -48,6 +51,7 @@ int InnerNode::findIndex(const Key& k) {
 // WARNING: can not insert when it has no entry
 void InnerNode::insertNonFull(const Key& k, Node* const& node) {
     // TODO
+    
 }
 
 // insert func
@@ -112,6 +116,13 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
 // If the leftBro and rightBro exist, the rightBro is prior to be used
 void InnerNode::getBrother(const int& index, InnerNode* const& parent, InnerNode* &leftBro, InnerNode* &rightBro) {
     // TODO
+    if (index > parent->nChild)
+        exit(1);
+    if (index > 1) {
+        leftBro = (InnerNode *)parent->childrens[index - 2];
+        if (index <= parent->nChild - 1)
+            rightBro = (InnerNode *)parent->childrens[index];
+    }
 }
 
 // merge this node, its parent and left brother(parent is root)
@@ -166,7 +177,10 @@ Value InnerNode::find(const Key& k) {
 // get the children node of this InnerNode
 Node* InnerNode::getChild(const int& idx) {
     // TODO
-    return NULL;
+    if (idx <= this->nChild)
+        return this->childrens[idx - 1];
+    else
+        return NULL;
 }
 
 // get the key of this InnerNode
