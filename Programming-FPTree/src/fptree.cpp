@@ -5,6 +5,13 @@ using namespace std;
 // Initial the new InnerNode
 InnerNode::InnerNode(const int& d, FPTree* const& t, bool _isRoot) {
     // TODO
+    this->isRoot = _isRoot;
+    this->nKeys = 0;
+    this->nChild = 0;
+    if ((this->keys = (Key*)malloc((2 * d + 1) * sizeof(Key))) == NULL)
+        exit(-1);
+    if ((this->childrens = (Node **)malloc((2 * d + 2) * sizeof(Node *))) == NULL)
+        exit(-1);
 }
 
 // delete the InnerNode
@@ -15,6 +22,21 @@ InnerNode::~InnerNode() {
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
     // TODO
+    int low, high, key;
+    low = 0;
+    high = this->nKeys;
+    while (low <= high)
+    {   
+        key = (low + high) / 2;
+        if (keys[key] == k)
+            return key;
+        else if(keys[key] < k)
+            high = key - 1;
+        else
+        {
+            low = key + 1;
+        }        
+    }
     return 0;
 }
 
