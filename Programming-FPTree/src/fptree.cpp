@@ -51,10 +51,11 @@ int InnerNode::findIndex(const Key& k) {
 // WARNING: can not insert when it has no entry
 void InnerNode::insertNonFull(const Key& k, Node* const& node) {
     // TODO
-    if (this->nChild == 0)
+    if (node == NULL)
         exit(1);
     else {
-        int num = findIndex(k);
+        int index = this->findIndex(k);
+        int num = index;
         for (int i = 0; i < num; ++ i) {
             this->childrens[this->nChild - i] = this->childrens[this->nChild - i - 1];
         }
@@ -71,12 +72,36 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
     // 1.insertion to the first leaf(only one leaf)
     if (this->isRoot && this->nKeys == 0) {
         // TODO
+        LeafNode *le = new LeafNode(this->tree);
+        le->insert(k, v);
+        this->insertNonFull(k, le);
         return newChild;
     }
     
     // 2.recursive insertion
     // TODO
-    return newChild;
+    int index = this->findIndex(k);
+    if (this->nChild == 0) {            //不用檢查是否分割
+        LeafNode *le = new LeafNode(this->tree);
+        le->insert(k, v);
+        this->insertNonFull(k, le);
+        return newChild;
+    }
+    if (this->childrens[index]->ifLeaf()) {
+        LeafNode *le = new LeafNode(this->tree);
+        le->insert(k, v);
+        this->insertNonFull(k, le);
+        if (this->nChild == 2 * this->degree + 2) {
+            newChild = this->split();
+            return newChild;
+        }
+        return newChild;
+    }
+    else {
+        InnerNode *next = (InnerNode *)this->childrens[index];
+        newChild = next->insert(k, v);
+        return newChild;
+    }
 }
 
 // ensure that the leaves inserted are ordered
@@ -105,7 +130,7 @@ KeyNode* InnerNode::split() {
     KeyNode* newChild = new KeyNode();
     // right half entries of old node to the new node, others to the old node. 
     // TODO
-
+    InnerNode *newC = new InnerNode(this->degree, this->tree, this->isRoot);
     return newChild;
 }
 
