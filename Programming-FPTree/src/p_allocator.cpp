@@ -66,6 +66,7 @@ PAllocator::PAllocator() {
         this->maxFileId =  tmp->maxFileId;
         this->freeNum = tmp->freeNum;
         this->startLeaf = tmp->treeStartLeaf;
+        pmem_unmap(pmem_addr_allo, maplen_allo);
 
         if((pmem_addr_free = (char*)pmem_map_file(freeListPath.c_str(), this->freeNum*sizeof(PPointer), PMEM_FILE_CREATE, 
         0666, &maplen_free, &is_pmem_free)) == NULL) {
@@ -77,6 +78,7 @@ PAllocator::PAllocator() {
         for (uint i = 0; i < this->freeNum; i ++) {
             this->freeList.push_back(freelist[i]);
         }
+        pmem_unmap(pmem_addr_free, maplen_free);
     } else {
         // not exist, create catalog and free_list file, then open.
         // TODO:
@@ -95,6 +97,8 @@ PAllocator::PAllocator() {
         this->maxFileId =  tmp->maxFileId = 1;
         this->freeNum = tmp->freeNum = 0;
         this->startLeaf = tmp->treeStartLeaf;
+        pmem_unmap(pmem_addr_allo, maplen_allo);
+
         if((pmem_addr_free = (char*)pmem_map_file(freeListPath.c_str(), sizeof(PPointer), PMEM_FILE_CREATE, 
         0666, &maplen_free, &is_pmem_free)) == NULL) {
             perror("pmem_map_file");
@@ -104,8 +108,9 @@ PAllocator::PAllocator() {
         // free_list = (PPointer*)pmem_addr_free;
         // free_list->fileId = 0;
         memcpy(pmem_addr_free, (char*)&free_list, maplen_free);
+        pmem_unmap(pmem_addr_free, maplen_free);
     }
-    //this->initFilePmemAddr();
+    this->initFilePmemAddr();
 }
 
 PAllocator::~PAllocator() {
@@ -118,13 +123,13 @@ PAllocator::~PAllocator() {
 void PAllocator::initFilePmemAddr() {
     // TODO
     uint64_t fid = 1;
-    char * pmem_addr;
     size_t mapped_len;
     int is_pmem;
     while (fid < this->maxFileId) {
-        if ((pmem_addr = (char *)pmem_map_file( (DATA_DIR + to_string(fid)).c_str(), 1024, PMEM_FILE_CREATE,
-                    0666, &mapped_len, &is_pmem)) != NULL) {
-            fId2PmAddr[fid] = pmem_addr;
+        if ((fId2PmAddr[fid] = (char *)pmem_map_file( (DATA_DIR + to_string(fid)).c_str(), sizeof(LeafGroup), 
+        PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem)) == NULL) {
+            perror("pmem_map_file");
+            exit(1);
         }        
         ++ fid;
     }
@@ -143,18 +148,14 @@ char* PAllocator::getLeafPmemAddr(PPointer p) {
 bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
     // TODO
 
-    int is_pmem;
-    size_t mapped_len;
     if (this->freeNum == 0) {
         if(!this->newLeafGroup())
             return false;
     }
     p = freeList.back();
 
-    if ((pmem_addr = (char *)pmem_map_file( (DATA_DIR + to_string(p.fileId)).c_str(), sizeof(LeafGroup), PMEM_FILE_CREATE,
-    0666, &mapped_len, &is_pmem)) == NULL)
-        return false;
-    //pmem_addr = this->fId2PmAddr[p.fileId];
+    if (this->fId2PmAddr.find(p.fileId) == this->fId2PmAddr.end()) return false;
+    pmem_addr = this->fId2PmAddr[p.fileId];
     LeafGroup *tmp;
     tmp = (LeafGroup*)pmem_addr; 
     uint64_t off_num = (p.offset - LEAF_GROUP_HEAD) / calLeafSize();
@@ -163,7 +164,6 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
 
     freeList.pop_back();
     this->freeNum = freeList.size();
-    this->fId2PmAddr[p.fileId] = pmem_addr;
     return true;
 }
 
@@ -205,17 +205,13 @@ bool PAllocator::freeLeaf(PPointer p) {
 
     // TODO
     char* pmem_addr;
-    size_t mapped_len;
-    int is_pmem;
     if (p.fileId >= this->maxFileId || 
     p.offset > LEAF_GROUP_HEAD + calLeafSize() * (LEAF_GROUP_AMOUNT - 1)) {
         return false;
     }
-    if((pmem_addr = (char*)pmem_map_file((DATA_DIR + to_string(p.fileId)).c_str(), sizeof(LeafGroup), 
-    PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem)) == NULL) {
-        perror("pmem_map_file");
-        return false;
-    }
+     if (this->fId2PmAddr.find(p.fileId) == this->fId2PmAddr.end()) return false;
+    pmem_addr = this->fId2PmAddr[p.fileId];
+
     uint64_t off_num = (p.offset - LEAF_GROUP_HEAD) / calLeafSize(); 
     LeafGroup *tmp;
     tmp = (LeafGroup*)pmem_addr;
@@ -239,32 +235,18 @@ bool PAllocator::persistCatalog(){ // writeback
     if ((pmemaddr_free = (char*)pmem_map_file(freeListPath.c_str(), this->freeNum * sizeof(PPointer), PMEM_FILE_CREATE,
                 0666, &mapped_len_free, &is_pmem_free)) == NULL) 
         return false;
-    // string string_allo, string_free;
-    // string_allo = string_free = "";
-    // string_allo = "" + to_string(this->maxFileId) + " " + to_string(this->freeNum)  + " " 
-    // + to_string(this->startLeaf.fileId) + " " + to_string(this->startLeaf.offset);
+
     catalog cal_tmp;
     cal_tmp.freeNum = this->freeNum;
     cal_tmp.maxFileId = this->maxFileId;
     cal_tmp.treeStartLeaf = this->startLeaf;
     memcpy(pmemaddr_allo, (char*)&cal_tmp, mapped_len_allo);
-    // strcpy(pmemaddr_allo, string_allo.c_str());
-    // if (is_pmem_allo)
-    //     pmem_persist(pmemaddr_allo, mapped_len_allo);
-    // else
-    //     pmem_msync(pmemaddr_allo, mapped_len_allo);
+
     PPointer free_list[this->freeNum];
     for(uint i = 0; i < this->freeList.size(); i ++){
-        //string_free += "" + to_string(vtmp.fileId) + " " + to_string(vtmp.offset) + " ";
         free_list[i] = this->freeList[i];
     }
-    // strcpy(pmemaddr_free, string_free.c_str());
     memcpy(pmemaddr_free, (char*)free_list, mapped_len_free);
-    // if (is_pmem_free)
-    //     pmem_persist(pmemaddr_free, mapped_len_free);
-    // else
-    //     pmem_msync(pmemaddr_free, mapped_len_free);
-    pmem_unmap(pmemaddr_allo, mapped_len_free);
     return true;
 }
 
