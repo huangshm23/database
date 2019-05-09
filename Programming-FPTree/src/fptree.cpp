@@ -4,18 +4,43 @@ using namespace std;
 
 // Initial the new InnerNode
 InnerNode::InnerNode(const int& d, FPTree* const& t, bool _isRoot) {
-    // TODO:
+    // TODO
+    this->isRoot = _isRoot;
+    this->nKeys = 0;
+    this->nChild = 0;
+    this->degree = d;
+    this->isLeaf = false;
+    this->tree = t;
+    this->keys = new Key[2 * d + 1];
+    this->childrens = new Node *[2 * d + 2];
 }
 
 // delete the InnerNode
 InnerNode::~InnerNode() {
-    // TODO:
+    // TODO
+    delete [] this->keys;
+    delete [] this->childrens;
 }
 
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
-    // TODO:
-    return 0;
+    // TODO
+    int low, high, key;
+    low = 0;
+    high = this->nKeys - 1;
+    while (low >= high - 1)
+    {   
+        key = (low + high) / 2;
+        if (keys[key] == k)
+            return key;
+        else if(keys[key] < k)
+            low = key;
+        else
+        {
+            high = key - 1;
+        }        
+    }
+    return low + 1;
 }
 
 // insert the node that is assumed not full
@@ -25,7 +50,18 @@ int InnerNode::findIndex(const Key& k) {
 // ======================
 // WARNING: can not insert when it has no entry
 void InnerNode::insertNonFull(const Key& k, Node* const& node) {
-    // TODO:
+    // TODO
+    if (node == NULL)
+        exit(1);
+    else {
+        int index = this->findIndex(k);
+        int num = index;
+        for (int i = 0; i < num; ++ i) {
+            this->childrens[this->nChild - i] = this->childrens[this->nChild - i - 1];
+        }
+        this->childrens[num - 1] = node;
+        this->nChild ++;
+    }
 }
 
 // insert func
@@ -35,13 +71,39 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
 
     // 1.insertion to the first leaf(only one leaf)
     if (this->isRoot && this->nKeys == 0) {
-        // TODO:
+
+        // TODO
+        LeafNode *le = new LeafNode(this->tree);
+        le->insert(k, v);
+        this->insertNonFull(k, le);
         return newChild;
     }
     
     // 2.recursive insertion
-    // TODO:
-    return newChild;
+
+    // TODO
+    int index = this->findIndex(k);
+    if (this->nChild == 0) {            //不用檢查是否分割
+        LeafNode *le = new LeafNode(this->tree);
+        le->insert(k, v);
+        this->insertNonFull(k, le);
+        return newChild;
+    }
+    if (this->childrens[index]->ifLeaf()) {
+        LeafNode *le = new LeafNode(this->tree);
+        le->insert(k, v);
+        this->insertNonFull(k, le);
+        if (this->nChild == 2 * this->degree + 2) {
+            newChild = this->split();
+            return newChild;
+        }
+        return newChild;
+    }
+    else {
+        InnerNode *next = (InnerNode *)this->childrens[index];
+        newChild = next->insert(k, v);
+        return newChild;
+    }
 }
 
 // ensure that the leaves inserted are ordered
@@ -69,8 +131,9 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
 KeyNode* InnerNode::split() {
     KeyNode* newChild = new KeyNode();
     // right half entries of old node to the new node, others to the old node. 
-    // TODO:
 
+    // TODO
+    InnerNode *newC = new InnerNode(this->degree, this->tree, this->isRoot);
     return newChild;
 }
 
@@ -89,7 +152,16 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
 
 // If the leftBro and rightBro exist, the rightBro is prior to be used
 void InnerNode::getBrother(const int& index, InnerNode* const& parent, InnerNode* &leftBro, InnerNode* &rightBro) {
-    // TODO:
+
+    // TODO
+    if (index > parent->nChild)
+        exit(1);
+    if (index > 1) {
+        leftBro = (InnerNode *)parent->childrens[index - 2];
+        if (index <= parent->nChild - 1)
+            rightBro = (InnerNode *)parent->childrens[index];
+    }
+
 }
 
 // merge this node, its parent and left brother(parent is root)
@@ -143,8 +215,12 @@ Value InnerNode::find(const Key& k) {
 
 // get the children node of this InnerNode
 Node* InnerNode::getChild(const int& idx) {
-    // TODO:
-    return NULL;
+
+    // TODO
+    if (idx <= this->nChild)
+        return this->childrens[idx - 1];
+    else
+        return NULL;
 }
 
 // get the key of this InnerNode
