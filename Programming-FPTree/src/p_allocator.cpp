@@ -147,7 +147,7 @@ char* PAllocator::getLeafPmemAddr(PPointer p) {
 // return 
 bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
     // TODO
-    // get the last free leaf
+
     if (this->freeNum == 0) {
         if(!this->newLeafGroup())
             return false;
