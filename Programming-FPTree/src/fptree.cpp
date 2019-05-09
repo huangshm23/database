@@ -28,19 +28,19 @@ int InnerNode::findIndex(const Key& k) {
     int low, high, key;
     low = 0;
     high = this->nKeys - 1;
-    while (low <= high)
+    while (low >= high - 1)
     {   
         key = (low + high) / 2;
         if (keys[key] == k)
             return key;
         else if(keys[key] < k)
-            high = key - 1;
+            low = key;
         else
         {
-            low = key + 1;
+            high = key - 1;
         }        
     }
-    return 0;
+    return low + 1;
 }
 
 // insert the node that is assumed not full
@@ -51,7 +51,16 @@ int InnerNode::findIndex(const Key& k) {
 // WARNING: can not insert when it has no entry
 void InnerNode::insertNonFull(const Key& k, Node* const& node) {
     // TODO
-    
+    if (this->nChild == 0)
+        exit(1);
+    else {
+        int num = findIndex(k);
+        for (int i = 0; i < num; ++ i) {
+            this->childrens[this->nChild - i] = this->childrens[this->nChild - i - 1];
+        }
+        this->childrens[num - 1] = node;
+        this->nChild ++;
+    }
 }
 
 // insert func
