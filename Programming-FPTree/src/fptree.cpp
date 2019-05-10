@@ -116,20 +116,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
             LeafNode *le = (LeafNode *) this->childrens[0];
             next = le->insert(k, v);
             if (next != NULL) {
-                int index = this->findIndex(newChild->key);
-                if (this->nChild == 2 * this->degree + 2) {
-                    right = this->split();
-                    if (index >= this->degree)
-                        this->insertNonFull(next->key, next->node);
-                    else {
-                        InnerNode* te = (InnerNode *) right->node;
-                        te->insertNonFull(next->key, next->node);
-                        newChild = right;
-                    }
-                }
-                else {
-                    this->insertNonFull(next->key, next->node);
-                }
+                this->insertNonFull(next->key, next->node);
             }
         }
         else {
@@ -137,7 +124,6 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
             le->insert(k, v);
             this->insertNonFull(k, le);
         }
-        cout << this->nChild <<endl;
         return newChild;
     }
     
@@ -165,6 +151,13 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
                     te->insertNonFull(next->key, next->node);
                     newChild = right;
                 }
+                if (this->isRoot) {
+                    InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
+                    this->isRoot = false;
+                    newRoot->insertNonFull(this->keys[this->nKeys - 1], this);
+                    newRoot->insertNonFull(right->key, right->node);
+                    this->tree->changeRoot(newRoot);
+                }
             }
             else {
                 this->insertNonFull(next->key, next->node);
@@ -184,6 +177,13 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
                     InnerNode* te = (InnerNode *) right->node;
                     te->insertNonFull(next->key, next->node);
                     newChild = right;
+                }
+                if (this->isRoot) {
+                    InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
+                    this->isRoot = false;
+                    newRoot->insertNonFull(this->keys[this->nKeys - 1], this);
+                    newRoot->insertNonFull(right->key, right->node);
+                    this->tree->changeRoot(newRoot);
                 }
             }
             else {
@@ -599,7 +599,7 @@ void LeafNode::persist() {
     }
 }
 
-// call by the ~FPTree(), delete the whole tree
+// called by the ~FPTree(), delete the whole tree
 void FPTree::recursiveDelete(Node* n) {
     cout << "delete c" <<n->isLeaf <<endl;
     if (n->isLeaf) {

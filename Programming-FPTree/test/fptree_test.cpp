@@ -101,9 +101,7 @@ TEST(FPTreeTest, BulkLoadingTwoLeaf) {
 
     FPTree* tree1 = new FPTree(2);
     for (int i = 1; i <= LEAF_DEGREE * 2; i++) {
-        cout << i << " " <<endl;
         tree1->insert(i, i * 100);
-        cout << tree1->find(i) <<endl;
     }
     cout << "ok1\n";
     EXPECT_EQ(pa->getFreeNum(), LEAF_GROUP_AMOUNT - 2);
