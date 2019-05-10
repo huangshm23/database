@@ -128,12 +128,7 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
     KeyNode* newChild = NULL;
     // first and second leaf insertion into the tree
     if (this->isRoot && this->nKeys == 0) {
-<<<<<<< HEAD
-        // TODO 
-
-=======
         // TODO:
->>>>>>> 365f5a0389880b5d6310321710e9ccc2cc8c94fa
         return newChild;
     }
     
