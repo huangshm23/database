@@ -98,36 +98,55 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
 
     // TODO
     int index = this->findIndex(k);
-    if (this->nChild == 0) {            //不用檢查是否分割
+    if (this->nChild == 0) {            //不用檢查是否分割和下一層
         LeafNode *le = new LeafNode(this->tree);
         le->insert(k, v);
         this->insertNonFull(k, le);
         return newChild;
     }
+    KeyNode* right = NULL;
+    KeyNode* next = NULL;
     if (this->childrens[index]->ifLeaf()) {
         LeafNode *le = (LeafNode *) this->childrens[index];
-        newChild = le->insert(k, v);
-        if (newChild != NULL) {
-            this->insertNonFull(k, le);
+        next = le->insert(k, v);
+        if (next != NULL) {
+            int index = this->findIndex(newChild->key);
             if (this->nChild == 2 * this->degree + 2) {
-                newChild = this->split();
-                return newChild;
+                right = this->split();
+                if (index >= this->degree)
+                    this->insertNonFull(next->key, next->node);
+                else {
+                    InnerNode* te = (InnerNode *) right->node;
+                    te->insertNonFull(next->key, next->node);
+                    newChild = right;
+                }
             }
-            return NULL;
+            else {
+                this->insertNonFull(next->key, next->node);
+            }
         }
     }
     else {
-        InnerNode *next = (InnerNode *)this->childrens[index];
-        newChild = next->insert(k, v);
-        if (newChild != NULL) {
-            this->insertNonFull(newChild->key, newChild->node);
+        InnerNode *le = (InnerNode *)this->childrens[index];
+        next = le->insert(k, v);
+        if (next != NULL) {
+            int index = this->findIndex(newChild->key);
             if (this->nChild == 2 * this->degree + 2) {
-                newChild = this->split();
-                return newChild;
+                right = this->split();
+                if (index >= this->degree)
+                    this->insertNonFull(next->key, next->node);
+                else {
+                    InnerNode* te = (InnerNode *) right->node;
+                    te->insertNonFull(next->key, next->node);
+                    newChild = right;
+                }
+            }
+            else {
+                this->insertNonFull(next->key, next->node);
             }
         }
-        return newChild;
     }
+    return newChild;
 }
 
 // ensure that the leaves inserted are ordered
