@@ -328,7 +328,7 @@ Node* InnerNode::getChild(const int& idx) {
 
     // TODO
     if (idx <= this->nChild)
-        return this->childrens[idx - 1];
+        return this->childrens[idx];
     else
         return NULL;
 }
@@ -405,14 +405,11 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
     this->tree = t;
     this->isLeaf = true;
     this->degree = 56;
-    // LeafGroup *tmp_l;
-    // char * pmem_addr = this->pmem_addr;
-    // tmp_l = (LeafGroup*)pmem_addr;
     Leaf *leaf;
     leaf = tmp->leaf;
     for (int i = 0; i < this->n; i ++) {
-        this->kv[i].k= leaf->unit[i].key;
-        this->kv[i].v = leaf->unit[i].value;
+        this->kv[i].k= leaf[offset_num].unit[i].key;
+        this->kv[i].v = leaf[offset_num].unit[i].value;
     }
 }
 
@@ -555,8 +552,8 @@ void LeafNode::persist() {
     uint64_t offset_num = (tmp_p.offset - LEAF_GROUP_HEAD) / calLeafSize();
     leaf->bitmap = this->bitmap;
     for (int i = 0; i < this->n; i ++) {
-        leaf->unit[i].key = this->kv[i].k;
-        leaf->unit[i].value = this->kv[i].v;
+        leaf[offset_num].unit[i].key = this->kv[i].k;
+        leaf[offset_num].unit[i].value = this->kv[i].v;
     }
 }
 
