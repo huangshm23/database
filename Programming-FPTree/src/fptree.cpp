@@ -158,6 +158,13 @@ KeyNode* InnerNode::split() {
 
     // TODO
     InnerNode *newC = new InnerNode(this->degree, this->tree, this->isRoot);
+    for (int i = 0; i <= this->degree; ++ i) {
+        newC->insertNonFull(this->keys[this->degree + i], this->childrens[this->degree + 1 + i]);
+    }
+    this->nKeys = this->degree;
+    this->nChild = this->degree + 1;
+    newChild->key = this->keys[this->degree];
+    newChild->node = newC;
     return newChild;
 }
 
