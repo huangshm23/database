@@ -388,7 +388,6 @@ LeafNode::LeafNode(FPTree* t) {
 // need to call the PAllocator
 LeafNode::LeafNode(PPointer p, FPTree* t) {
     // TODO:
-    cout << "Constrator\n";
     PAllocator* p_allocator = PAllocator::getAllocator();
     char* pmem_addr = p_allocator->getLeafPmemAddr(p);
     this->pmem_addr = pmem_addr;
@@ -398,7 +397,7 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
     this->n = 0;
     uint64_t offset_num = (p.offset - LEAF_GROUP_HEAD) / calLeafSize();
     this->bitmap = tmp->leaf[offset_num].bitmap;
-    this->fingerprints = NULL;
+    this->fingerprints = tmp->leaf[offset_num].fingerprints;
     this->pNext = NULL;
     this->kv = new KeyValue[2*LEAF_DEGREE];
     this->prev = this->next = NULL;
@@ -407,9 +406,16 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
     this->degree = 56;
     Leaf *leaf;
     leaf = tmp->leaf;
-    for (int i = 0; i < this->n; i ++) {
-        this->kv[i].k= leaf[offset_num].unit[i].key;
-        this->kv[i].v = leaf[offset_num].unit[i].value;
+    for (int i = 0; i < 14; i ++) {
+        if ((leaf[offset_num].bitmap[i]) == 0) continue;
+        for (int j = 0; j < 8; j ++) {
+            if ((leaf[offset_num].bitmap[i]) & (1<<j)) {
+                this->kv[this->n].k = leaf[offset_num].unit[i * 8 + j].key;
+                this->kv[this->n].v = leaf[offset_num].unit[i * 8 + j].value;
+                this->n ++;
+            }
+        }
+        
     }
 }
 
@@ -427,6 +433,7 @@ KeyNode* LeafNode::insert(const Key& k, const Value& v) {
     if(this->n >= this->degree * 2){ // sort before split
         newChild = split();
     }
+    this->persist();
     return newChild; 
 }
 
@@ -553,7 +560,7 @@ void LeafNode::persist() {
     leaf = tmp_l->leaf;
     PPointer tmp_p = this->pPointer;
     uint64_t offset_num = (tmp_p.offset - LEAF_GROUP_HEAD) / calLeafSize();
-    leaf->bitmap = this->bitmap;
+    leaf[offset_num].bitmap = this->bitmap;
     for (int i = 0; i < this->n; i ++) {
         leaf[offset_num].unit[i].key = this->kv[i].k;
         leaf[offset_num].unit[i].value = this->kv[i].v;
@@ -645,9 +652,20 @@ bool FPTree::bulkLoading() {
         leafgroup = (LeafGroup *)pmem_addr;
         Leaf *leaf;
         leaf = leafgroup->leaf;
-        for(uint i = 0; i < leafgroup->usedNum ; ++i){
-            this->insert(leaf->unit[i].key, leaf->unit[i].value);
-            flag = true; //there is something changed -> reload
+        for(uint n = 0; n < leafgroup->usedNum ; ++n){
+            if (!leafgroup->is_used[n]) continue;
+
+            for (int i = 0; i < 14; i ++) {
+                if ((leaf[n].bitmap[i]) == 0) continue;
+                for (int j = 0; j < 8; j ++) {
+                    if ((leaf[n].bitmap[i]) & (1<<j)) {
+                        Key k = leaf[n].unit[i * 8 + j].key;
+                        Value v = leaf[n].unit[i * 8 + j].value;
+                        this->insert(k, v);
+                        flag = true; //there is something changed -> reload
+                    }
+                }
+            }
         }
         ++index;
     }
