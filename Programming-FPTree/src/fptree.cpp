@@ -520,7 +520,10 @@ bool LeafNode::update(const Key& k, const Value& v) {
 // if the entry can not be found, return the max Value
 Value LeafNode::find(const Key& k) {
     // TODO:
-    return 100;
+    for (int i = 0; i < this->n; ++ i) {
+        if (this->kv[i].k == k)
+            return this->kv[i].v;
+    }
     return MAX_VALUE;
 }
 
