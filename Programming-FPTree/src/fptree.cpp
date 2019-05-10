@@ -436,7 +436,7 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
     KeyValue kv;// no need to sort before split
     kv.k = k;
     kv.v = v;
-    this->kv[this->n -1] = kv;
+    this->kv[this->n] = kv;
     int tmp = this->n / 8;
     this->bitmap[this->n / 8] |= 1 << (this->n % 8);
     ++this->n;
@@ -493,7 +493,7 @@ Key LeafNode::findSplitKey() {
 int LeafNode::getBit(const int& idx) {
     // TODO:
     if (idx < this->n)
-        return this->bitmap[idx];
+        return this->bitmap[idx / 8] & (1 << idx % 8);
     return 0;
 }
 
@@ -634,7 +634,7 @@ void FPTree::printTree() {
 bool FPTree::bulkLoading() {
     // TODO: 
     PAllocator* p_allocator = PAllocator::getAllocator();
-    uint64_t maxFileId = p_allocator->getMaxFileId(), index = 1;
+    uint64_t maxFileId = p_allocator->getMaxFileId(), index = 1; 
     bool flag = false;
     while(index < maxFileId){
         PPointer ppointer;
