@@ -25,11 +25,14 @@ InnerNode::~InnerNode() {
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
     // TODO
+    if (this->nKeys == 0)
+        return 1;
+    if (keys[this->nKeys - 1] < k)
+        return nKeys + 1;
     int low, high, key;
     low = 0;
     high = this->nKeys - 1;
-    while (low >= high - 1)
-    {   
+    while (low < high - 1) {   
         key = (low + high) / 2;
         if (keys[key] == k)
             return key;
@@ -40,6 +43,8 @@ int InnerNode::findIndex(const Key& k) {
             high = key - 1;
         }        
     }
+    if (keys[low] < k)
+        low = low + 1;
     return low + 1;
 }
 
@@ -54,13 +59,23 @@ void InnerNode::insertNonFull(const Key& k, Node* const& node) {
     if (node == NULL)
         exit(1);
     else {
-        int index = this->findIndex(k);
-        int num = index;
-        for (int i = 0; i < num; ++ i) {
-            this->childrens[this->nChild - i] = this->childrens[this->nChild - i - 1];
+        if (this->getChildNum == 0) { //插入第一個節點
+            this->childrens[0] = node;
+            this->nChild ++;
         }
-        this->childrens[num - 1] = node;
-        this->nChild ++;
+        else {
+            int index = this->findIndex(k);
+            int num = index;
+            for (int i = 0; i <= this->nKeys - num; ++ i) {
+                this->keys[this->nKeys - i] = this->keys[this->nKeys - i - 1];
+                this->childrens[this->nChild - i] = this->childrens[this->nChild - i - 1];
+            }
+            this->childrens[num - 1] = this->childrens[num];
+            this->keys[num - 1] = k;
+            this->childrens[num] = node;
+            ++ this->nKeys;
+            ++ this->nChild;
+        }
     }
 }
 
@@ -111,7 +126,8 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
     KeyNode* newChild = NULL;
     // first and second leaf insertion into the tree
     if (this->isRoot && this->nKeys == 0) {
-        // TODO
+        // TODO 
+
         return newChild;
     }
     
