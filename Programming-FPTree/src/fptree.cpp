@@ -405,6 +405,12 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
     this->tree = t;
     this->isLeaf = true;
     this->degree = 56;
+    Leaf *leaf;
+    leaf = tmp->leaf;
+    for (int i = 0; i < this->n; i ++) {
+        this->kv[i].k= leaf[offset_num].unit[i].key;
+        this->kv[i].v = leaf[offset_num].unit[i].value;
+    }
 }
 
 LeafNode::~LeafNode() {
@@ -548,8 +554,8 @@ void LeafNode::persist() {
     uint64_t offset_num = (tmp_p.offset - LEAF_GROUP_HEAD) / calLeafSize();
     leaf->bitmap = this->bitmap;
     for (int i = 0; i < this->n; i ++) {
-        leaf->unit[i].key = this->kv[i].k;
-        leaf->unit[i].value = this->kv[i].v;
+        leaf[offset_num].unit[i].key = this->kv[i].k;
+        leaf[offset_num].unit[i].value = this->kv[i].v;
     }
 }
 
@@ -625,6 +631,24 @@ void FPTree::printTree() {
 // if no tree is reloaded, return FALSE
 // need to call the PALlocator
 bool FPTree::bulkLoading() {
-    // TODO:    
-    return false;
+    // TODO: 
+    PAllocator* p_allocator = PAllocator::getAllocator();
+    uint64_t maxFileId = p_allocator->getMaxFileId(), index = 1;
+    bool flag = false;
+    while(index < maxFileId){
+        PPointer ppointer;
+        ppointer.fileId = index;
+        ppointer.offset = 0;
+        char * pmem_addr = p_allocator->getLeafPmemAddr(ppointer);
+        LeafGroup *leafgroup;
+        leafgroup = (LeafGroup *)pmem_addr;
+        Leaf *leaf;
+        leaf = leafgroup->leaf;
+        for(uint i = 0; i < leafgroup->usedNum ; ++i){
+            this->insert(leaf->unit[i].key, leaf->unit[i].value);
+            flag = true; //there is something changed -> reload
+        }
+        ++index;
+    }
+    return flag;
 }
