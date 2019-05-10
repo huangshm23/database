@@ -67,7 +67,7 @@ int InnerNode::findIndex(const Key& k) {
     }
     if (keys[low] < k)
         low = low + 1;
-    return low + 1;
+    return low;
 }
 
 // insert the node that is assumed not full
@@ -87,7 +87,7 @@ void InnerNode::insertNonFull(const Key& k, Node* const& node) {
         }
         else {
             int index = this->findIndex(k);
-            int num = index;
+            int num = index + 1;
             for (int i = 0; i <= this->nKeys - num; ++ i) {
                 this->keys[this->nKeys - i] = this->keys[this->nKeys - i - 1];
                 this->childrens[this->nChild - i] = this->childrens[this->nChild - i - 1];
@@ -119,7 +119,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
     // 2.recursive insertion
 
     // TODO
-    int index = this->findIndex(k);
+    int index = this->findIndex(k) + 1;
     if (this->nChild == 0) {            //不用檢查是否分割和下一層
         LeafNode *le = new LeafNode(this->tree);
         le->insert(k, v);
@@ -328,7 +328,7 @@ Node* InnerNode::getChild(const int& idx) {
 
     // TODO
     if (idx <= this->nChild)
-        return this->childrens[idx - 1];
+        return this->childrens[idx];
     else
         return NULL;
 }
@@ -430,8 +430,8 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
     KeyValue kv;// no need to sort before split
     kv.k = k;
     kv.v = v;
-    this->kv[this->n -1] = kv;
-    this->bitmap[this->n - 1] = true;
+    this->kv[this->n] = kv;
+    this->bitmap[this->n] = true;
     ++this->n;
 }
 
@@ -485,6 +485,8 @@ Key LeafNode::findSplitKey() {
 // TIPS: bit operation
 int LeafNode::getBit(const int& idx) {
     // TODO:
+    if (idx < this->n)
+        return this->bitmap[idx];
     return 0;
 }
 
@@ -623,6 +625,6 @@ void FPTree::printTree() {
 // if no tree is reloaded, return FALSE
 // need to call the PALlocator
 bool FPTree::bulkLoading() {
-    // TODO: 
+    // TODO:    
     return false;
 }
