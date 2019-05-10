@@ -353,7 +353,7 @@ LeafNode::LeafNode(FPTree* t) {
     this->n = 0;
     this->bitmap = this->fingerprints = NULL;
     this->pNext = NULL;
-    this->kv = NULL;
+    this->kv = new KeyValue[2*LEAF_DEGREE];
     this->prev = this->next = NULL;
     this->tree = t;
     this->isLeaf = true;
@@ -372,7 +372,7 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
     this->n = 0;
     this->bitmap = this->fingerprints = NULL;
     this->pNext = NULL;
-    this->kv = NULL;
+    this->kv = new KeyValue[2*LEAF_DEGREE];
     this->prev = this->next = NULL;
     this->tree = t;
     this->isLeaf = true;
@@ -381,6 +381,8 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
 
 LeafNode::~LeafNode() {
     // TODO:
+    this->persist();
+    delete [] kv;
 }
 
 // insert an entry into the leaf, need to split it if it is full
@@ -577,6 +579,6 @@ void FPTree::printTree() {
 // if no tree is reloaded, return FALSE
 // need to call the PALlocator
 bool FPTree::bulkLoading() {
-    // TODO:
+    // TODO: 
     return false;
 }
