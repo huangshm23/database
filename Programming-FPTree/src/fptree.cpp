@@ -27,7 +27,7 @@ int InnerNode::findIndex(const Key& k) {
     // TODO
     if (this->nKeys == 0)
         return 1;
-    if (keys[this->nKeys - 1] < k)
+    if (keys[this->nKeys - 1] < k)//如果K值大於所有，直接返回nkeys + 1；
         return nKeys + 1;
     int low, high, key;
     low = 0;
@@ -105,18 +105,27 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
         return newChild;
     }
     if (this->childrens[index]->ifLeaf()) {
-        LeafNode *le = new LeafNode(this->tree);
-        le->insert(k, v);
-        this->insertNonFull(k, le);
-        if (this->nChild == 2 * this->degree + 2) {
-            newChild = this->split();
-            return newChild;
+        LeafNode *le = (LeafNode *) this->childrens[index];
+        newChild = le->insert(k, v);
+        if (newChild != NULL) {
+            this->insertNonFull(k, le);
+            if (this->nChild == 2 * this->degree + 2) {
+                newChild = this->split();
+                return newChild;
+            }
+            return NULL;
         }
-        return newChild;
     }
     else {
         InnerNode *next = (InnerNode *)this->childrens[index];
         newChild = next->insert(k, v);
+        if (newChild != NULL) {
+            this->insertNonFull(newChild->key, newChild->node);
+            if (this->nChild == 2 * this->degree + 2) {
+                newChild = this->split();
+                return newChild;
+            }
+        }
         return newChild;
     }
 }
