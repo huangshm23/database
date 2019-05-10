@@ -59,7 +59,7 @@ void InnerNode::insertNonFull(const Key& k, Node* const& node) {
     if (node == NULL)
         exit(1);
     else {
-        if (this->getChildNum == 0) { //插入第一個節點
+        if (this->getChildNum() == 0) { //插入第一個節點
             this->childrens[0] = node;
             this->nChild ++;
         }
@@ -138,6 +138,7 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
     // first and second leaf insertion into the tree
     if (this->isRoot && this->nKeys == 0) {
         // TODO:
+        this->insertNonFull(leaf.key, leaf.node);
         return newChild;
     }
     
@@ -145,10 +146,47 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
     // Tip: please judge whether this InnerNode is full
     // next level is not leaf, just insertLeaf
     // TODO:
-
+    KeyNode* right = NULL;
+    KeyNode* next = NULL;
+    int index = this->findIndex(leaf.key);
+    if (!this->childrens[0]->ifLeaf()) { //如果爲扉頁，進入下一層
+        InnerNode* nextIn = (InnerNode *) this->childrens[index];
+        next = nextIn->insertLeaf(leaf);
+        if (next != NULL) {
+            index = this->findIndex(next->key);
+            if (this->nKeys == this->degree * 2 + 1) {
+                right = this->split();
+                if (index >= this->degree)
+                    this->insertNonFull(next->key, next->node);
+                else {
+                    InnerNode* te = (InnerNode *) right->node;
+                    te->insertNonFull(next->key, next->node);
+                    newChild = right;
+                }
+            }
+            else {
+                this->insertNonFull(next->key, next->node);
+            }
+        }
+    }
     // next level is leaf, insert to childrens array
     // TODO:
-
+    else {
+        index = this->findIndex(leaf.key);
+        if (this->nKeys != this->degree * 2 + 1) {
+            this->insertNonFull(leaf.key, leaf.node);
+        }
+        else {
+            right = this->split();
+            if (index >= this->degree)
+                this->insertNonFull(leaf.key, leaf.node);
+            else {
+                InnerNode* te = (InnerNode *) right->node;
+                te->insertNonFull(leaf.key, leaf.node);
+                newChild = right;
+            }
+        }
+    }
     return newChild;
 }
 
