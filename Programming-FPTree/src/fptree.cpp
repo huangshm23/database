@@ -405,6 +405,15 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
     this->tree = t;
     this->isLeaf = true;
     this->degree = 56;
+    // LeafGroup *tmp_l;
+    // char * pmem_addr = this->pmem_addr;
+    // tmp_l = (LeafGroup*)pmem_addr;
+    Leaf *leaf;
+    leaf = tmp->leaf;
+    for (int i = 0; i < this->n; i ++) {
+        this->kv[i].k= leaf->unit[i].key;
+        this->kv[i].v = leaf->unit[i].value;
+    }
 }
 
 LeafNode::~LeafNode() {
@@ -624,5 +633,23 @@ void FPTree::printTree() {
 // need to call the PALlocator
 bool FPTree::bulkLoading() {
     // TODO: 
-    return false;
+    PAllocator* p_allocator = PAllocator::getAllocator();
+    uint64_t maxFileId = p_allocator->getMaxFileId(), index = 1;
+    bool flag = false;
+    while(index < maxFileId){
+        PPointer ppointer;
+        ppointer.fileId = index;
+        ppointer.offset = 0;
+        char * pmem_addr = p_allocator->getLeafPmemAddr(ppointer);
+        LeafGroup *leafgroup;
+        leafgroup = (LeafGroup *)pmem_addr;
+        Leaf *leaf;
+        leaf = leafgroup->leaf;
+        for(uint i = 0; i < leafgroup->usedNum ; ++i){
+            this->insert(leaf->unit[i].key, leaf->unit[i].value);
+            flag = true; //there is something changed -> reload
+        }
+        ++index;
+    }
+    return flag;
 }
