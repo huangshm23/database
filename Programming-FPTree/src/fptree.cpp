@@ -1,5 +1,5 @@
 #include"fptree/fptree.h"
-
+#include<algorithm>
 using namespace std;
 
 // Initial the new InnerNode
@@ -86,6 +86,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
 
     // 1.insertion to the first leaf(only one leaf)
     if (this->isRoot && this->nKeys == 0) {
+
         // TODO
         LeafNode *le = new LeafNode(this->tree);
         le->insert(k, v);
@@ -94,6 +95,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
     }
     
     // 2.recursive insertion
+
     // TODO
     int index = this->findIndex(k);
     if (this->nChild == 0) {            //不用檢查是否分割
@@ -126,18 +128,22 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
     KeyNode* newChild = NULL;
     // first and second leaf insertion into the tree
     if (this->isRoot && this->nKeys == 0) {
+<<<<<<< HEAD
         // TODO 
 
+=======
+        // TODO:
+>>>>>>> 365f5a0389880b5d6310321710e9ccc2cc8c94fa
         return newChild;
     }
     
     // recursive insert
     // Tip: please judge whether this InnerNode is full
     // next level is not leaf, just insertLeaf
-    // TODO
+    // TODO:
 
     // next level is leaf, insert to childrens array
-    // TODO
+    // TODO:
 
     return newChild;
 }
@@ -145,6 +151,7 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
 KeyNode* InnerNode::split() {
     KeyNode* newChild = new KeyNode();
     // right half entries of old node to the new node, others to the old node. 
+
     // TODO
     InnerNode *newC = new InnerNode(this->degree, this->tree, this->isRoot);
     return newChild;
@@ -156,15 +163,16 @@ KeyNode* InnerNode::split() {
 bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete) {
     bool ifRemove = false;
     // only have one leaf
-    // TODO
+    // TODO:
     
     // recursive remove
-    // TODO
+    // TODO:
     return ifRemove;
 }
 
 // If the leftBro and rightBro exist, the rightBro is prior to be used
 void InnerNode::getBrother(const int& index, InnerNode* const& parent, InnerNode* &leftBro, InnerNode* &rightBro) {
+
     // TODO
     if (index > parent->nChild)
         exit(1);
@@ -173,59 +181,61 @@ void InnerNode::getBrother(const int& index, InnerNode* const& parent, InnerNode
         if (index <= parent->nChild - 1)
             rightBro = (InnerNode *)parent->childrens[index];
     }
+
 }
 
 // merge this node, its parent and left brother(parent is root)
 void InnerNode::mergeParentLeft(InnerNode* const& parent, InnerNode* const& leftBro) {
-    // TODO
+    // TODO:
 }
 
 // merge this node, its parent and right brother(parent is root)
 void InnerNode::mergeParentRight(InnerNode* const& parent, InnerNode* const& rightBro) {
-    // TODO
+    // TODO:
 }
 
 // this node and its left brother redistribute
 // the left has more entries
 void InnerNode::redistributeLeft(const int& index, InnerNode* const& leftBro, InnerNode* const& parent) {
-    // TODO
+    // TODO:
 }
 
 // this node and its right brother redistribute
 // the right has more entries
 void InnerNode::redistributeRight(const int& index, InnerNode* const& rightBro, InnerNode* const& parent) {
-    // TODO
+    // TODO:
 }
 
 // merge all entries to its left bro, delete this node after merging.
 void InnerNode::mergeLeft(InnerNode* const& leftBro, const Key& k) {
-    // TODO
+    // TODO:
 }
 
 // merge all entries to its right bro, delete this node after merging.
 void InnerNode::mergeRight(InnerNode* const& rightBro, const Key& k) {
-    // TODO
+    // TODO:
 }
 
 // remove a children from the current node, used by remove func
 void InnerNode::removeChild(const int& keyIdx, const int& childIdx) {
-    // TODO
+    // TODO:
 }
 
 // update the target entry, return true if the update succeed.
 bool InnerNode::update(const Key& k, const Value& v) {
-    // TODO
+    // TODO:
     return false;
 }
 
 // find the target value with the search key, return MAX_VALUE if it fails.
 Value InnerNode::find(const Key& k) {
-    // TODO
+    // TODO:
     return MAX_VALUE;
 }
 
 // get the children node of this InnerNode
 Node* InnerNode::getChild(const int& idx) {
+
     // TODO
     if (idx <= this->nChild)
         return this->childrens[idx - 1];
@@ -264,35 +274,103 @@ void LeafNode::printNode() {
 
 // new a empty leaf and set the valuable of the LeafNode
 LeafNode::LeafNode(FPTree* t) {
-    // TODO
+    // TODO:
+    PAllocator* p_allocator = PAllocator::getAllocator();
+    PPointer ppointer;
+    char *pmem_addr;
+    p_allocator->getLeaf(ppointer, pmem_addr);
+    this->pmem_addr = pmem_addr;
+    this->pPointer = ppointer; 
+    this->filePath = DATA_DIR + to_string(ppointer.fileId);//above three are gotten from getLeaf
+    this->n = 0;
+    this->bitmap = this->fingerprints = NULL;
+    this->pNext = NULL;
+    this->kv = NULL;
+    this->prev = this->next = NULL;
+    this->tree = t;
+    this->isLeaf = true;
+    this->degree = 56;
 }
 
 // reload the leaf with the specific Persistent Pointer
 // need to call the PAllocator
 LeafNode::LeafNode(PPointer p, FPTree* t) {
-    // TODO
+    // TODO:
+    PAllocator* p_allocator = PAllocator::getAllocator();
+    char* pmem_addr = p_allocator->getLeafPmemAddr(p);
+    this->pmem_addr = pmem_addr;
+    this->pPointer = p; 
+    this->filePath = DATA_DIR + to_string(p.fileId);//above three are gotten from getLeaf
+    this->n = 0;
+    this->bitmap = this->fingerprints = NULL;
+    this->pNext = NULL;
+    this->kv = NULL;
+    this->prev = this->next = NULL;
+    this->tree = t;
+    this->isLeaf = true;
+    this->degree = 56;
 }
 
 LeafNode::~LeafNode() {
-    // TODO
+    // TODO:
 }
 
 // insert an entry into the leaf, need to split it if it is full
 KeyNode* LeafNode::insert(const Key& k, const Value& v) {
     KeyNode* newChild = NULL;
-    // TODO
-    return newChild;
+    // TODO:
+    insertNonFull(k,v);
+    if(this->n >= this->degree * 2){ // sort before split
+        newChild = split();
+    }
+    return newChild; 
 }
 
 // insert into the leaf node that is assumed not full
 void LeafNode::insertNonFull(const Key& k, const Value& v) {
-    // TODO
+    // TODO:
+    KeyValue kv;// no need to sort before split
+    kv.k = k;
+    kv.v = v;
+    this->kv[this->n -1] = kv;
+    this->bitmap[this->n - 1] = true;
+    ++this->n;
 }
+
 
 // split the leaf node
 KeyNode* LeafNode::split() {
     KeyNode* newChild = new KeyNode();
-    // TODO
+    // TODO:
+    for(int i = 0 ; i < this->n - 1; ++i){//sort
+        KeyValue kvi = kv[i];
+        for(int j = i ; j < this->n; ++j){ // n=112 bubble sort may be quicker than other method
+            if(kv[j].k < kvi.k){
+                kv[i] = kv[j];
+                kv[j] = kvi;
+                kvi = kv[i];
+            }
+        }
+    }
+    //split
+    KeyValue medium = kv[this->n/2];
+    newChild->key = medium.k;
+    newChild->node = new LeafNode(this->tree);
+    LeafNode* newNode = (LeafNode *)newChild->node;
+    LeafNode* next = this->next;
+    //modify the old leafNode
+    for(int i = this->n / 2; i < this->n; ++i)
+        this->bitmap[i] = false;
+    this->n /= 2;
+    this->next = newNode;
+    //modify the new LeafNode
+    newNode->n = this->n;
+    for(int i = 0; i < newNode->n ; ++i){
+        newNode->bitmap[i] = true;
+        newNode->kv[i]= this->kv[this->n + i];
+    }
+    newNode->prev = this;
+    newNode->next = next;
     return newChild;
 }
 
@@ -301,14 +379,14 @@ KeyNode* LeafNode::split() {
 // qsort first then find
 Key LeafNode::findSplitKey() {
     Key midKey = 0;
-    // TODO
+    // TODO:
     return midKey;
 }
 
 // get the targte bit in bitmap
 // TIPS: bit operation
 int LeafNode::getBit(const int& idx) {
-    // TODO
+    // TODO:
     return 0;
 }
 
@@ -329,7 +407,7 @@ PPointer LeafNode::getPPointer() {
 // need to call PAllocator to set this leaf free and reuse it
 bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete) {
     bool ifRemove = false;
-    // TODO
+    // TODO:
     return ifRemove;
 }
 
@@ -337,26 +415,26 @@ bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, 
 // return TRUE if the update succeed
 bool LeafNode::update(const Key& k, const Value& v) {
     bool ifUpdate = false;
-    // TODO
+    // TODO:
     return ifUpdate;
 }
 
 // if the entry can not be found, return the max Value
 Value LeafNode::find(const Key& k) {
-    // TODO
+    // TODO:
     return MAX_VALUE;
 }
 
 // find the first empty slot
 int LeafNode::findFirstZero() {
-    // TODO
+    // TODO:
     return -1;
 }
 
 // persist the entire leaf
 // use PMDK
 void LeafNode::persist() {
-    // TODO
+    // TODO:
 }
 
 // call by the ~FPTree(), delete the whole tree
@@ -423,7 +501,7 @@ Value FPTree::find(Key k) {
 // call the InnerNode and LeafNode print func to print the whole tree
 // TIPS: use Queue
 void FPTree::printTree() {
-    // TODO
+    // TODO:
 }
 
 // bulkLoading the leaf files and reload the tree
@@ -431,6 +509,6 @@ void FPTree::printTree() {
 // if no tree is reloaded, return FALSE
 // need to call the PALlocator
 bool FPTree::bulkLoading() {
-    // TODO
+    // TODO:
     return false;
 }

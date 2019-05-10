@@ -37,6 +37,9 @@ struct Leaf_Unit{
     Value value;
 };
 struct Leaf{
+    Byte       bitmap[14];         // bitmap of the KV slots
+    PPointer*  pNext;          // next leafnode
+    Byte       fingerprints[112];   // the fingerprint of the keys array
     Leaf_Unit unit[112];
 };
 struct LeafGroup{
