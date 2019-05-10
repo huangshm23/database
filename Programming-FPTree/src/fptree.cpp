@@ -2,6 +2,28 @@
 #include<algorithm>
 using namespace std;
 
+
+struct Leaf_Unit{
+    Key key;
+    Value value;
+};
+struct Leaf{
+    Byte*      bitmap;         // bitmap of the KV slots
+    PPointer*  pNext;          // next leafnode
+    Byte*      fingerprints;   // the fingerprint of the keys array
+    Leaf_Unit* unit;
+    Leaf() {
+        this->bitmap = new Byte[14];
+        this->fingerprints = new Byte[112];
+        this->unit = new Leaf_Unit[112];
+    }
+};
+struct LeafGroup{
+    uint64_t usedNum;
+    bool is_used[16];
+    Leaf leaf[16];
+};
+
 // Initial the new InnerNode
 InnerNode::InnerNode(const int& d, FPTree* const& t, bool _isRoot) {
     // TODO
@@ -348,10 +370,12 @@ LeafNode::LeafNode(FPTree* t) {
     char *pmem_addr;
     p_allocator->getLeaf(ppointer, pmem_addr);
     this->pmem_addr = pmem_addr;
+    LeafGroup *tmp = (LeafGroup*)pmem_addr;
     this->pPointer = ppointer; 
     this->filePath = DATA_DIR + to_string(ppointer.fileId);//above three are gotten from getLeaf
     this->n = 0;
-    this->bitmap = this->fingerprints = NULL;
+    this->bitmap = (Byte*)tmp->is_used;
+    this->fingerprints = NULL;
     this->pNext = NULL;
     this->kv = new KeyValue[2*LEAF_DEGREE];
     this->prev = this->next = NULL;
@@ -364,13 +388,17 @@ LeafNode::LeafNode(FPTree* t) {
 // need to call the PAllocator
 LeafNode::LeafNode(PPointer p, FPTree* t) {
     // TODO:
+    cout << "Constrator\n";
     PAllocator* p_allocator = PAllocator::getAllocator();
     char* pmem_addr = p_allocator->getLeafPmemAddr(p);
     this->pmem_addr = pmem_addr;
+    LeafGroup *tmp = (LeafGroup*)pmem_addr;
     this->pPointer = p; 
     this->filePath = DATA_DIR + to_string(p.fileId);//above three are gotten from getLeaf
     this->n = 0;
-    this->bitmap = this->fingerprints = NULL;
+    uint64_t offset_num = (p.offset - LEAF_GROUP_HEAD) / calLeafSize();
+    this->bitmap = tmp->leaf[offset_num].bitmap;
+    this->fingerprints = NULL;
     this->pNext = NULL;
     this->kv = new KeyValue[2*LEAF_DEGREE];
     this->prev = this->next = NULL;
@@ -492,6 +520,7 @@ bool LeafNode::update(const Key& k, const Value& v) {
 // if the entry can not be found, return the max Value
 Value LeafNode::find(const Key& k) {
     // TODO:
+    return 100;
     return MAX_VALUE;
 }
 
@@ -505,6 +534,18 @@ int LeafNode::findFirstZero() {
 // use PMDK
 void LeafNode::persist() {
     // TODO:
+    LeafGroup *tmp_l;
+    char * pmem_addr = this->pmem_addr;
+    tmp_l = (LeafGroup*)pmem_addr;
+    Leaf *leaf;
+    leaf = tmp_l->leaf;
+    PPointer tmp_p = this->pPointer;
+    uint64_t offset_num = (tmp_p.offset - LEAF_GROUP_HEAD) / calLeafSize();
+    leaf->bitmap = this->bitmap;
+    for (int i = 0; i < this->n; i ++) {
+        leaf->unit[i].key = this->kv[i].k;
+        leaf->unit[i].value = this->kv[i].v;
+    }
 }
 
 // call by the ~FPTree(), delete the whole tree

@@ -37,10 +37,15 @@ struct Leaf_Unit{
     Value value;
 };
 struct Leaf{
-    Byte       bitmap[14];         // bitmap of the KV slots
+    Byte*      bitmap;         // bitmap of the KV slots
     PPointer*  pNext;          // next leafnode
-    Byte       fingerprints[112];   // the fingerprint of the keys array
-    Leaf_Unit unit[112];
+    Byte*      fingerprints;   // the fingerprint of the keys array
+    Leaf_Unit* unit;
+    Leaf() {
+        this->bitmap = new Byte[14];
+        this->fingerprints = new Byte[112];
+        this->unit = new Leaf_Unit[112];
+    }
 };
 struct LeafGroup{
     uint64_t usedNum;
