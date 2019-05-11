@@ -56,31 +56,6 @@ InnerNode::~InnerNode() {
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
     // TODO
-    /*if (this->nKeys == 0)
-        return 0;
-    if (keys[this->nKeys - 1] <= k)//如果K值大於所有，直接返回nkeys + 1；
-        return nKeys;
-    if (keys[0] == k)
-        return 1;
-    int low, high, key;
-    low = 0;
-    high = this->nKeys - 1;
-    while (low < high - 1) {   
-        key = (low + high) / 2;
-        if (keys[key] == k) {
-            cout << "key" <<key;
-            return key + 1;
-        }
-        else if(keys[key] < k)
-            low = key;
-        else
-        {
-            high = key - 1;
-        }        
-    }
-    if (keys[low] < k)
-        low = low + 1;
-    return low;*/
     return upper_bound(this->keys, this->keys + this->nKeys, k) - this->keys;
 }
 
@@ -143,9 +118,6 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
     // 2.recursive insertion
     // TODO
     int index = this->findIndex(k);
-    if (k == 336) {
-        cout << index <<endl;
-    }
     if (this->nChild == 0) {            //不用檢查是否分割和下一層
         LeafNode *le = new LeafNode(this->tree);
         le->insert(k, v);
@@ -601,7 +573,6 @@ bool LeafNode::update(const Key& k, const Value& v) {
 // if the entry can not be found, return the max Value
 Value LeafNode::find(const Key& k) {
     // TODO:
-        //cout << k<<" LEAF"<<this->kv[0].k <<" " << this->kv[55].k<<" "<< this->kv[56].k<<" " << this->kv[110].k<<" " << this->kv[111].k<<endl;
     for (int i = 0; i < this->n; ++ i) {
         if (this->kv[i].k == k)
             return this->kv[i].v;
@@ -722,10 +693,8 @@ bool FPTree::bulkLoading() {
         char * pmem_addr = p_allocator->getLeafPmemAddr(ppointer);
         LeafGroup *leafgroup;
         leafgroup = (LeafGroup *)pmem_addr;
-        Leaf *leaf;
-        leaf = leafgroup->leaf;
-        int num = 0;
-        for(uint n = 15; n >= 0; --n){
+        uint num = 0;
+        for(int n = 15; n >= 0; --n){
             if (num >= leafgroup->usedNum) break;
             if (!leafgroup->is_used[n]) continue;
             num ++;
