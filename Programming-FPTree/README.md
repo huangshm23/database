@@ -6,18 +6,19 @@
 1. Ubuntu 18.04
 2. 配置模拟NVM
 3. 安装PMDK的libpmem库
-4. 编译安装LevelDB
+4. [编译安装LevelDB](https://github.com/google/leveldb)
 5. c++ 11标准编译
 
-### 部署步骤
+### 部署步骤（注：有链接教大家简单安装环境）
 1. [配置模拟NVM](https://software.intel.com/zh-cn/articles/how-to-emulate-persistent-memory-on-an-intel-architecture-server)
 
 2. 安装[PMDK的libpmem库](http://pmem.io/pmdk/libpmem/)
 
-3. 编译安装[LevelDB](https://github.com/google/leveldb)
+3. 编译安装[LevelDB](https://blog.csdn.net/Arcpii/article/details/85930702)
 
 ### 目录结构描述
 ```
+|__data: 临时测试数据文件夹，生成的数据文件会放到这个位置。（注意运行测试文件时要使用./bin/XXX_test，保证相对路径成立）
 |__gtest: 为Google Test项目目录，不用管  
 |__include: 里包含所有用到的头文件  
    |__fptree: fptree的头文件所在文件夹  
@@ -75,8 +76,18 @@
 3. LevelDB的使用以及测试，对应lycsb.cpp的实现和运行。注：测试levelDB的性能，方便与之后的系统比较。
 
 ### V1 版本使用说明
-1. 
-2.
+首先需进入到Programming-FPTree文件夹，测试步骤：
+1. 进入src文件夹，执行make命令，生成相关可执行文件存放于bin文件夹，执行bin目录下的lycsb文件，测试levelDB的性能。
+2. 退回到Programming-FPTree文件夹，进入test文件夹，执行make命令，测试内存分配的实现效果。注意这里执行test测试，需要在test/目录下运行可执行文件，即使用./bin/XXX_test，以保证相对路径成立。
+
+### V2 版本内容说明
+1. 完成fptree.cpp的部分内容，使其实现重载（bulkloading）和插入(Insert)操作，并且通过部分测试。
+2. 在test/ 目录下，执行make指令可以编译并链接文件，生成bin目录下的可执行测试文件；在test/ 目录下执行./bin/fptree_test即可运行测试。（注：测试文件已经修改，将未用到的测试项目注释掉，剩下测试重载和插入操作的函数测试）
+3. 使用make clean可以清除make生成的所有文件；执行make cleand可以清除data文件夹内的数据文件。
+
+### 注意事项：
+1. 需要挂载模拟NVM的文件夹如：/mnt/pmemdir/testdb文件夹，同时需要执行sudo chmod /mnt/pmemdir 0666命令修改pmemdir的权限。
+2. 为了测试方便，这里使用的是Programming-FPTree主目录下的data文件夹作为数据文件夹，如果需要使用模拟NVM环境，则将文件夹路径修改为对应挂载的文件夹，如/mnt/pmemdir/testdb
 
 ### 作者列表
-张家桥 黄世明 何思远 黄善恒
+黄世明 何思远 黄善恒
