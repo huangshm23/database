@@ -155,7 +155,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
             int index = this->findIndex(next->key);
             if (this->nChild == 2 * this->degree + 2) {
                 right = this->split();
-                if (index >= this->degree)
+                if (index < this->degree)
                     this->insertNonFull(next->key, next->node);
                 else {
                     InnerNode* te = (InnerNode *) right->node;
@@ -182,7 +182,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
             int index = this->findIndex(newChild->key);
             if (this->nChild == 2 * this->degree + 2) {
                 right = this->split();
-                if (index >= this->degree)
+                if (index < this->degree)
                     this->insertNonFull(next->key, next->node);
                 else {
                     InnerNode* te = (InnerNode *) right->node;
@@ -231,7 +231,7 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
             index = this->findIndex(next->key);
             if (this->nKeys == this->degree * 2 + 1) {
                 right = this->split();
-                if (index >= this->degree)
+                if (index < this->degree)
                     this->insertNonFull(next->key, next->node);
                 else {
                     InnerNode* te = (InnerNode *) right->node;
@@ -260,7 +260,7 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
         }
         else {
             right = this->split();
-            if (index >= this->degree)
+            if (index < this->degree)
                 this->insertNonFull(leaf.key, leaf.node);
             else {
                 InnerNode* te = (InnerNode *) right->node;
@@ -479,6 +479,7 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
 LeafNode::~LeafNode() {
     // TODO:
     this->persist();
+    
     delete [] kv;
 }
 
@@ -629,6 +630,7 @@ void LeafNode::persist() {
         leaf[offset_num].unit[i].key = this->kv[i].k;
         leaf[offset_num].unit[i].value = this->kv[i].v;
     }
+    //pmem_msync(pmem_addr, sizeof(LeafGroup));
 }
 
 // called by the ~FPTree(), delete the whole tree
