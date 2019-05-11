@@ -92,7 +92,9 @@ void InnerNode::insertNonFull(const Key& k, Node* const& node) {
                 this->keys[this->nKeys - i] = this->keys[this->nKeys - i - 1];
                 this->childrens[this->nChild - i] = this->childrens[this->nChild - i - 1];
             }
-            this->childrens[num - 1] = this->childrens[num];
+            /*if (num != 1) {
+                this->childrens[num - 1] = this->childrens[num];
+            }*/
             this->keys[num - 1] = k;
             this->childrens[num] = node;
             ++ this->nKeys;
@@ -130,7 +132,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
     // 2.recursive insertion
 
     // TODO
-    int index = this->findIndex(k) + 1;
+    int index = this->findIndex(k);
     if (this->nChild == 0) {            //不用檢查是否分割和下一層
         LeafNode *le = new LeafNode(this->tree);
         le->insert(k, v);
@@ -141,7 +143,9 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
         LeafNode *le = (LeafNode *) this->childrens[index];
         next = le->insert(k, v);
         if (next != NULL) {
-            int index = this->findIndex(newChild->key);
+            cout << "next != NULL"<< index<<endl;
+            int index = this->findIndex(next->key);
+            cout << "next != NULL"<< index<<endl;
             if (this->nChild == 2 * this->degree + 2) {
                 right = this->split();
                 if (index >= this->degree)
@@ -497,7 +501,7 @@ KeyNode* LeafNode::split() {
         }
     }
     //split
-    KeyValue medium = kv[this->n/2];
+    KeyValue medium = kv[this->n/2 - 1];
     newChild->key = medium.k;
     newChild->node = new LeafNode(this->tree);
     LeafNode* newNode = (LeafNode *)newChild->node;
@@ -515,6 +519,7 @@ KeyNode* LeafNode::split() {
     }
     newNode->prev = this;
     newNode->next = next;
+    cout << (this==NULL) <<endl;
     return newChild;
 }
 
@@ -606,7 +611,7 @@ void FPTree::recursiveDelete(Node* n) {
         delete n;
     } else {
         for (int i = 0; i < ((InnerNode*)n)->nChild; i++) {
-            cout << ((InnerNode*)n)->nChild <<endl;
+            cout << (((InnerNode*)n)->childrens[i] == NULL) <<endl;
             recursiveDelete(((InnerNode*)n)->childrens[i]);
             cout << i <<endl;
         }
