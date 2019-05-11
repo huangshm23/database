@@ -43,6 +43,9 @@ struct Leaf{
     Leaf_Unit* unit;
     Leaf() {
         this->bitmap = new Byte[14];
+        for (int i = 0; i < 14; i ++) {
+            this->bitmap[i] &= 0x00;
+        }
         this->fingerprints = new Byte[112];
         this->unit = new Leaf_Unit[112];
     }
@@ -51,6 +54,12 @@ struct LeafGroup{
     uint64_t usedNum;
     bool is_used[16];
     Leaf leaf[16];
+    LeafGroup () {
+        for (int i = 0; i < 16; i ++) {
+            this->is_used[i] = 0;
+        }
+        usedNum = 0;
+    }
 };
 PAllocator::PAllocator() {
     string allocatorCatalogPath = DATA_DIR + P_ALLOCATOR_CATALOG_NAME;

@@ -14,6 +14,9 @@ struct Leaf{
     Leaf_Unit* unit;
     Leaf() {
         this->bitmap = new Byte[14];
+        for (int i = 0; i < 14; i ++) {
+            this->bitmap[i] &= 0x00;
+        }
         this->fingerprints = new Byte[112];
         this->unit = new Leaf_Unit[112];
     }
@@ -22,6 +25,12 @@ struct LeafGroup{
     uint64_t usedNum;
     bool is_used[16];
     Leaf leaf[16];
+    LeafGroup () {
+        for (int i = 0; i < 16; i ++) {
+            this->is_used[i] = 0;
+        }
+        usedNum = 0;
+    }
 };
 
 // Initial the new InnerNode
@@ -92,7 +101,7 @@ void InnerNode::insertNonFull(const Key& k, Node* const& node) {
                 this->keys[this->nKeys - i] = this->keys[this->nKeys - i - 1];
                 this->childrens[this->nChild - i] = this->childrens[this->nChild - i - 1];
             }
-            this->childrens[num - 1] = this->childrens[num];
+            //this->childrens[num - 1] = this->childrens[num];
             this->keys[num - 1] = k;
             this->childrens[num] = node;
             ++ this->nKeys;
@@ -406,8 +415,8 @@ LeafNode::LeafNode(FPTree* t) {
     this->pPointer = ppointer; 
     this->filePath = DATA_DIR + to_string(ppointer.fileId);//above three are gotten from getLeaf
     this->n = 0;
-    this->bitmap = (Byte*)tmp->is_used;
-    this->fingerprints = NULL;
+    this->bitmap = tmp->leaf[15].bitmap;
+    this->fingerprints = tmp->leaf[15].fingerprints;
     this->pNext = NULL;
     this->kv = new KeyValue[2*LEAF_DEGREE];
     this->prev = this->next = NULL;
@@ -504,13 +513,13 @@ KeyNode* LeafNode::split() {
     LeafNode* next = this->next;
     //modify the old leafNode
     for(int i = this->n / 2; i < this->n; ++i)
-        this->bitmap[i] = false;
+        this->bitmap[i / 8] |= (~(1<<(i%8)));
     this->n /= 2;
     this->next = newNode;
     //modify the new LeafNode
     newNode->n = this->n;
     for(int i = 0; i < newNode->n ; ++i){
-        newNode->bitmap[i] = true;
+        newNode->bitmap[i / 8] |= (1<<(i%8));
         newNode->kv[i]= this->kv[this->n + i];
     }
     newNode->prev = this;
@@ -688,7 +697,8 @@ bool FPTree::bulkLoading() {
         leafgroup = (LeafGroup *)pmem_addr;
         Leaf *leaf;
         leaf = leafgroup->leaf;
-        for(uint n = 0; n < leafgroup->usedNum ; ++n){
+        int num = 0;
+        for(uint n = 15; n >= 0; --n){
             if (!leafgroup->is_used[n]) continue;
 
             for (int i = 0; i < 14; i ++) {
