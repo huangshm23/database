@@ -152,9 +152,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
         LeafNode *le = (LeafNode *) this->childrens[index];
         next = le->insert(k, v);
         if (next != NULL) {
-            cout << "next != NULL"<< index<<endl;
             int index = this->findIndex(next->key);
-            cout << "next != NULL"<< index<<endl;
             if (this->nChild == 2 * this->degree + 2) {
                 right = this->split();
                 if (index >= this->degree)
@@ -533,7 +531,6 @@ KeyNode* LeafNode::split() {
     newNode->prev = this;
     newNode->next = next;
     newNode->persist();
-    cout << (this==NULL) <<endl;
     return newChild;
 }
 
@@ -553,7 +550,7 @@ Key LeafNode::findSplitKey() {
             }
         }
     }
-    midKey = this->kv[this->n/2 - 1].k;
+    midKey = this->kv[this->n/2].k;
     return midKey;
 }
 
@@ -608,6 +605,11 @@ Value LeafNode::find(const Key& k) {
 // find the first empty slot
 int LeafNode::findFirstZero() {
     // TODO:
+    for (int i = 0; i < 14; i ++) {
+        for (int j = 0; j < 8; j ++) {
+            if (this->bitmap[i]&(1<<j)) return i * 8 + j;
+        }
+    }
     return -1;
 }
 
@@ -631,14 +633,11 @@ void LeafNode::persist() {
 
 // called by the ~FPTree(), delete the whole tree
 void FPTree::recursiveDelete(Node* n) {
-    cout << "delete c" <<n->isLeaf <<endl;
     if (n->isLeaf) {
         delete n;
     } else {
         for (int i = 0; i < ((InnerNode*)n)->nChild; i++) {
-            cout << (((InnerNode*)n)->childrens[i] == NULL) <<endl;
             recursiveDelete(((InnerNode*)n)->childrens[i]);
-            cout << i <<endl;
         }
         delete n;
     }
@@ -652,7 +651,6 @@ FPTree::FPTree(uint64_t t_degree) {
 }
 
 FPTree::~FPTree() {
-    cout << "~tree0" <<endl;
     recursiveDelete(this->root);
 }
 
@@ -726,7 +724,7 @@ bool FPTree::bulkLoading() {
             ppointer.offset = n * calLeafSize() + LEAF_GROUP_HEAD;
             LeafNode *l_node = new LeafNode(ppointer, this);
             KeyNode *k_node = new KeyNode;
-            Key k = l_node->findSplitKey();
+            Key k = l_node->kv[0].k;
             k_node->key = k;
             k_node->node = (Node*)l_node;
             flag = true;
