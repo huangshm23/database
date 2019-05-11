@@ -705,14 +705,19 @@ bool FPTree::bulkLoading() {
         int num = 0;
         for(uint n = 15; n >= 0; --n){
             if (!leafgroup->is_used[n]) continue;
-
+            ppointer.offset = n * calLeafSize() + LEAF_GROUP_HEAD;
             for (int i = 0; i < 14; i ++) {
                 if ((leaf[n].bitmap[i]) == 0) continue;
                 for (int j = 0; j < 8; j ++) {
                     if ((leaf[n].bitmap[i]) & (1<<j)) {
                         Key k = leaf[n].unit[i * 8 + j].key;
                         Value v = leaf[n].unit[i * 8 + j].value;
-                        this->insert(k, v);
+                        //this->insert(k, v);
+                        LeafNode *l_node = new LeafNode(ppointer, this);
+                        KeyNode *k_node = new KeyNode;
+                        k_node->key = k;
+                        k_node->node = (Node*)l_node;
+                        this->root->insertLeaf(*k_node);
                         flag = true; //there is something changed -> reload
                     }
                 }
