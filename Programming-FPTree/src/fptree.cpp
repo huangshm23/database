@@ -483,6 +483,7 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
 LeafNode::~LeafNode() {
     // TODO:
     this->persist();
+    
     delete [] kv;
 }
 
@@ -611,6 +612,11 @@ Value LeafNode::find(const Key& k) {
 // find the first empty slot
 int LeafNode::findFirstZero() {
     // TODO:
+    for (int i = 0; i < 14; i ++) {
+        for (int j = 0; j < 8; j ++) {
+            if (this->bitmap[i]&(1<<j)) return i * 8 + j;
+        }
+    }
     return -1;
 }
 
@@ -630,6 +636,7 @@ void LeafNode::persist() {
         leaf[offset_num].unit[i].key = this->kv[i].k;
         leaf[offset_num].unit[i].value = this->kv[i].v;
     }
+    //pmem_msync(pmem_addr, sizeof(LeafGroup));
 }
 
 // called by the ~FPTree(), delete the whole tree
