@@ -142,7 +142,6 @@ TEST(FPTreeTest, BulkLoadingOneLeafGroup) {
     for (int i = 1; i < LEAF_DEGREE * 10; i++) {
         EXPECT_EQ(t_tree->find(i), i * 10);
     }
-
     removeFile();
 }
 /*
