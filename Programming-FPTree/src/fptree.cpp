@@ -517,9 +517,10 @@ KeyNode* LeafNode::split() {
     LeafNode* next = this->next;
     //modify the old leafNode
     for(int i = this->n / 2; i < this->n; ++i)
-        this->bitmap[i / 8] |= (~(1<<(i%8)));
+        this->bitmap[i / 8] &= (1<<((i + 1)%8));
     this->n /= 2;
     this->next = newNode;
+    this->persist();
     //modify the new LeafNode
     newNode->n = this->n;
     for(int i = 0; i < newNode->n ; ++i){
@@ -528,6 +529,7 @@ KeyNode* LeafNode::split() {
     }
     newNode->prev = this;
     newNode->next = next;
+    newNode->persist();
     cout << (this==NULL) <<endl;
     return newChild;
 }
@@ -704,7 +706,9 @@ bool FPTree::bulkLoading() {
         leaf = leafgroup->leaf;
         int num = 0;
         for(uint n = 15; n >= 0; --n){
+            if (num >= leafgroup->usedNum) break;
             if (!leafgroup->is_used[n]) continue;
+            num ++;
             ppointer.offset = n * calLeafSize() + LEAF_GROUP_HEAD;
             for (int i = 0; i < 14; i ++) {
                 if ((leaf[n].bitmap[i]) == 0) continue;
