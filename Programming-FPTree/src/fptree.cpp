@@ -240,6 +240,13 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
                     te->insertNonFull(next->key, next->node);
                     newChild = right;
                 }
+                if (this->isRoot) {
+                    InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
+                    this->isRoot = false;
+                    newRoot->insertNonFull(this->keys[this->nKeys - 1], this);
+                    newRoot->insertNonFull(right->key, right->node);
+                    this->tree->changeRoot(newRoot);
+                }
             }
             else {
                 this->insertNonFull(next->key, next->node);
@@ -262,6 +269,13 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
                 te->insertNonFull(leaf.key, leaf.node);
                 newChild = right;
             }
+            if (this->isRoot) {
+                    InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
+                    this->isRoot = false;
+                    newRoot->insertNonFull(this->keys[this->nKeys - 1], this);
+                    newRoot->insertNonFull(right->key, right->node);
+                    this->tree->changeRoot(newRoot);
+                }
         }
     }
     return newChild;
@@ -712,6 +726,7 @@ bool FPTree::bulkLoading() {
                     if ((leaf[n].bitmap[i]) & (1<<j)) {
                         Key k = leaf[n].unit[i * 8 + j].key;
                         Value v = leaf[n].unit[i * 8 + j].value;
+                        cout << k << " " << v <<endl;
                         this->insert(k, v);
                         flag = true; //there is something changed -> reload
                     }
