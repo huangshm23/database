@@ -724,22 +724,29 @@ bool FPTree::bulkLoading() {
             if (!leafgroup->is_used[n]) continue;
             num ++;
             ppointer.offset = n * calLeafSize() + LEAF_GROUP_HEAD;
-            for (int i = 0; i < 14; i ++) {
-                if ((leaf[n].bitmap[i]) == 0) continue;
-                for (int j = 0; j < 8; j ++) {
-                    if ((leaf[n].bitmap[i]) & (1<<j)) {
-                        Key k = leaf[n].unit[i * 8 + j].key;
-                        Value v = leaf[n].unit[i * 8 + j].value;
-                        //this->insert(k, v);
-                        LeafNode *l_node = new LeafNode(ppointer, this);
-                        KeyNode *k_node = new KeyNode;
-                        k_node->key = k;
-                        k_node->node = (Node*)l_node;
-                        this->root->insertLeaf(*k_node);
-                        flag = true; //there is something changed -> reload
-                    }
-                }
-            }
+            LeafNode *l_node = new LeafNode(ppointer, this);
+            KeyNode *k_node = new KeyNode;
+            Key k = l_node->findSplitKey();
+            k_node->key = k;
+            k_node->node = (Node*)l_node;
+            flag = true;
+            this->root->insertLeaf(*k_node);
+            // for (int i = 0; i < 14; i ++) {
+            //     if ((leaf[n].bitmap[i]) == 0) continue;
+            //     for (int j = 0; j < 8; j ++) {
+            //         if ((leaf[n].bitmap[i]) & (1<<j)) {
+            //             Key k = leaf[n].unit[i * 8 + j].key;
+            //             Value v = leaf[n].unit[i * 8 + j].value;
+            //             //this->insert(k, v);
+                        
+            //             KeyNode *k_node = new KeyNode;
+            //             k_node->key = k;
+            //             k_node->node = (Node*)l_node;
+            //             this->root->insertLeaf(*k_node);
+            //             flag = true; //there is something changed -> reload
+            //         }
+            //     }
+            // }
         }
         ++index;
     }
