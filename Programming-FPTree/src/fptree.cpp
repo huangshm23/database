@@ -513,19 +513,8 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
 KeyNode* LeafNode::split() {
     KeyNode* newChild = new KeyNode();
     // TODO:
-    for(int i = 0 ; i < this->n - 1; ++i){//sort
-        KeyValue kvi = kv[i];
-        for(int j = i ; j < this->n; ++j){ // n=112 bubble sort may be quicker than other method
-            if(kv[j].k < kvi.k){
-                kv[i] = kv[j];
-                kv[j] = kvi;
-                kvi = kv[i];
-            }
-        }
-    }
     //split
-    KeyValue medium = kv[this->n/2 - 1];
-    newChild->key = medium.k;
+    newChild->key = this->findSplitKey();
     newChild->node = new LeafNode(this->tree);
     LeafNode* newNode = (LeafNode *)newChild->node;
     LeafNode* next = this->next;
@@ -554,6 +543,17 @@ KeyNode* LeafNode::split() {
 Key LeafNode::findSplitKey() {
     Key midKey = 0;
     // TODO:
+    for(int i = 0 ; i < this->n - 1; ++i){//sort
+        KeyValue kvi = kv[i];
+        for(int j = i ; j < this->n; ++j){ // n=112 bubble sort may be quicker than other method
+            if(kv[j].k < kvi.k){
+                kv[i] = kv[j];
+                kv[j] = kvi;
+                kvi = kv[i];
+            }
+        }
+    }
+    midKey = this->kv[this->n/2 - 1].k;
     return midKey;
 }
 
