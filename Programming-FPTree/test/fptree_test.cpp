@@ -44,7 +44,7 @@ TEST(FPTreeTest, InsertOneLeaf) {
     for (int i = 1; i <= LEAF_DEGREE; i++) {
         // TODO: error, the insertion did not persist
         l1->insert(i, i * 10);
-        l1->persist();
+        //l1->persist();
     }
     ifstream f1(file1, ios::binary|ios::in);
     Byte bit1;
@@ -103,22 +103,15 @@ TEST(FPTreeTest, BulkLoadingTwoLeaf) {
     for (int i = 1; i <= LEAF_DEGREE * 2; i++) {
         tree1->insert(i, i * 100);
     }
-    cout << "ok1\n";
     EXPECT_EQ(pa->getFreeNum(), LEAF_GROUP_AMOUNT - 2);
-    cout << "ok2\n";
     delete tree1;
-    cout << "ok\n";
     ifstream f1(file1);
     EXPECT_EQ(f1.is_open(), true);
-    cout << "ok3\n";
     f1.close();
     f1.clear();
     PAllocator::getAllocator()->~PAllocator();
-    cout << "ok4\n";
     FPTree* tree2 = new FPTree(1);
-    cout << "ok5\n";
     EXPECT_EQ(tree2->find(1), 100);
-    cout << "ok6\n";
     removeFile();
 }
 
