@@ -66,9 +66,9 @@
 
 ### 实现时间计划
 1. 5/3晚前完成系统说明书，lycsb.cpp，p_allocator.cpp的实现和运行，utility_test.cpp的运行,5/4进行检查优化并发布v1版本branch。
-2. 5/10晚前完成fptree.cpp的部分实现和fptree_test.cpp部分的运行，5/11进行检查优化并发布v2版本branch
-3. 5/17晚前完成fptree.cpp的部分实现和fptree_test.cpp部分的运行，5/18进行检查优化并发布v3版本branch
-4. 5/30晚前完成fptree.cpp的部分实现和fptree_test.cpp所有的运行，5/31进行检查优化并发布final版本branch，作为最后发布版本
+2. 5/10晚前完成fptree.cpp的部分功能实现（插入）和fptree_test.cpp部分的运行，5/11进行检查优化并发布v2版本branch
+3. 5/17晚前完成fptree.cpp的部分功能实现（查找和更新）和fptree_test.cpp部分的运行，5/18进行检查优化并发布v3版本branch
+4. 5/30晚前完成fptree.cpp的部分功能实现（删除）和fptree_test.cpp所有的运行，5/31进行检查优化并发布final版本branch，作为最后发布版本
 
 ### V1 版本内容更新
 1. 增加系统说明书。
