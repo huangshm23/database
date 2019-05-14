@@ -70,12 +70,11 @@
 3. 5/17晚前完成fptree.cpp的部分功能实现（查找和更新）和fptree_test.cpp部分的运行，5/18进行检查优化并发布v3版本branch
 4. 5/30晚前完成fptree.cpp的部分功能实现（删除）和fptree_test.cpp所有的运行，5/31进行检查优化并发布final版本branch，作为最后发布版本
 
-### V1 版本内容更新
-1. 增加系统说明书。
-2. PAllocator实现并通过utility测试，p_allocator.cpp的实现和运行，utility_test.cpp的运行。注：即内存分配的实现。
-3. LevelDB的使用以及测试，对应lycsb.cpp的实现和运行。注：测试levelDB的性能，方便与之后的系统比较。
+### V3 版本内容更新
+1. 增加fptree的查找和更新功能
+2. 增加fptree_test.cpp关于查找和更新的测试
 
-### V1 版本使用说明
+### V3 版本使用说明
 首先需进入到Programming-FPTree文件夹，测试步骤：
 1. 进入src文件夹，执行make命令，生成相关可执行文件存放于bin文件夹，执行bin目录下的lycsb文件，测试levelDB的性能。
 2. 退回到Programming-FPTree文件夹，进入test文件夹，执行make命令，测试内存分配的实现效果。注意这里执行test测试，需要在test/目录下运行可执行文件，即使用./bin/XXX_test，以保证相对路径成立。
