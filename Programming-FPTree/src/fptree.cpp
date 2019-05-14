@@ -338,7 +338,19 @@ void InnerNode::removeChild(const int& keyIdx, const int& childIdx) {
 // update the target entry, return true if the update succeed.
 bool InnerNode::update(const Key& k, const Value& v) {
     // TODO:
-    return false;
+    bool flag = false;
+    int index = this->findIndex(k);
+    if (index > this->nKeys)
+        return flag;
+    if (this->childrens[index]->ifLeaf()) {
+        LeafNode *te = (LeafNode *) this->childrens[index];
+        flag =  te->update(k, v);
+    }
+    else {
+        InnerNode *te1 = (InnerNode *) this->childrens[index];
+        flag = te1->update(k, v);
+    }
+    return flag;
 }
 
 // find the target value with the search key, return MAX_VALUE if it fails.
@@ -567,6 +579,15 @@ bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, 
 bool LeafNode::update(const Key& k, const Value& v) {
     bool ifUpdate = false;
     // TODO:
+    for (int i = 0; i < this->n; ++ i) {
+        if (this->kv[i].k == k) {
+            this->kv[i].v = v;
+            ifUpdate = true;
+            break;
+        }
+    }
+    if (ifUpdate)
+        this->persist();
     return ifUpdate;
 }
 
