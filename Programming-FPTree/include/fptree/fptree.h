@@ -96,6 +96,7 @@ public:
     bool     remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete);
     bool     update(const Key& k, const Value& v);
     Value    find(const Key& k);
+    void     updateChidren(const Key& k, const int& index, InnerNode* const& newChild);
     
     KeyNode* split();
     void     removeChild(const int& KeyIdx, const int& childIdx);
