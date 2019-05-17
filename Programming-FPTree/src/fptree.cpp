@@ -129,15 +129,9 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
         next = le->insert(k, v);
         if (next != NULL) {
             int index = this->findIndex(next->key);
+            this->insertNonFull(next->key, next->node);
             if (this->nChild == 2 * this->degree + 2) {
                 right = this->split();
-                if (index < this->degree)
-                    this->insertNonFull(next->key, next->node);
-                else {
-                    InnerNode* te = (InnerNode *) right->node;
-                    te->insertNonFull(next->key, next->node);
-                    newChild = right;
-                }
                 if (this->isRoot) {
                     InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
                     this->isRoot = false;
@@ -145,9 +139,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
                     newRoot->insertNonFull(right->key, right->node);
                     this->tree->changeRoot(newRoot);
                 }
-            }
-            else {
-                this->insertNonFull(next->key, next->node);
+                newChild = right;
             }
         }
     }
@@ -156,15 +148,9 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
         next = le->insert(k, v);
         if (next != NULL) {
             int index = this->findIndex(next->key);
+            this->insertNonFull(next->key, next->node);
             if (this->nChild == 2 * this->degree + 2) {
                 right = this->split();
-                if (index < this->degree)
-                    this->insertNonFull(next->key, next->node);
-                else {
-                    InnerNode* te = (InnerNode *) right->node;
-                    te->insertNonFull(next->key, next->node);
-                    newChild = right;
-                }
                 if (this->isRoot) {
                     InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
                     this->isRoot = false;
@@ -172,9 +158,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
                     newRoot->insertNonFull(right->key, right->node);
                     this->tree->changeRoot(newRoot);
                 }
-            }
-            else {
-                this->insertNonFull(next->key, next->node);
+                newChild = right;
             }
         }
     }
@@ -205,15 +189,9 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
         next = nextIn->insertLeaf(leaf);
         if (next != NULL) {
             index = this->findIndex(next->key);
+            this->insertNonFull(next->key, next->node);
             if (this->nKeys == this->degree * 2 + 1) {
                 right = this->split();
-                if (index < this->degree)
-                    this->insertNonFull(next->key, next->node);
-                else {
-                    InnerNode* te = (InnerNode *) right->node;
-                    te->insertNonFull(next->key, next->node);
-                    newChild = right;
-                }
                 if (this->isRoot) {
                     InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
                     this->isRoot = false;
@@ -221,9 +199,7 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
                     newRoot->insertNonFull(right->key, right->node);
                     this->tree->changeRoot(newRoot);
                 }
-            }
-            else {
-                this->insertNonFull(next->key, next->node);
+                newChild = right;
             }
         }
     }
@@ -231,25 +207,17 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
     // TODO:
     else {
         index = this->findIndex(leaf.key);
-        if (this->nKeys != this->degree * 2 + 1) {
-            this->insertNonFull(leaf.key, leaf.node);
-        }
-        else {
+        this->insertNonFull(leaf.key, leaf.node);
+        if (this->nKeys == this->degree * 2 + 1) {
             right = this->split();
-            if (index < this->degree)
-                this->insertNonFull(leaf.key, leaf.node);
-            else {
-                InnerNode* te = (InnerNode *) right->node;
-                te->insertNonFull(leaf.key, leaf.node);
-                newChild = right;
-            }
             if (this->isRoot) {
-                    InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
-                    this->isRoot = false;
-                    newRoot->insertNonFull(this->keys[this->nKeys - 1], this);
-                    newRoot->insertNonFull(right->key, right->node);
-                    this->tree->changeRoot(newRoot);
-                }
+                InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
+                this->isRoot = false;
+                newRoot->insertNonFull(this->keys[this->nKeys - 1], this);
+                newRoot->insertNonFull(right->key, right->node);
+                this->tree->changeRoot(newRoot);
+            }
+            newChild = right;
         }
     }
     return newChild;
