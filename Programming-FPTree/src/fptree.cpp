@@ -752,7 +752,7 @@ bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, 
             for (int j = i; j < this->n - 1; ++ j) {
                 this->kv[j] = this->kv[j + 1];
             }
-            this->bitmap[i / 8] &= ~(1 << (i % 8));
+            this->bitmap[(this->n - 1) / 8] &= ~(1 << ((this->n) % 8));
             ifRemove = true;
             -- this->n;
             if (this->n == 0) {
