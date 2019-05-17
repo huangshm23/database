@@ -474,18 +474,18 @@ void InnerNode::redistributeLeft(const int& index, InnerNode* const& leftBro, In
 void InnerNode::redistributeRight(const int& index, InnerNode* const& rightBro, InnerNode* const& parent) {
     // TODO:
     int num = this->nChild + rightBro->getChildNum();
-    int right = num / 2;
-    int left = num - right;
-    int start = rightBro->getKeyNum() - right - 1;
+    int left = num / 2;
+    int right = num - left;
+    int start = rightBro->getKeyNum() - right;
     Key k = rightBro->getKey(start);
     this->insertNonFull(parent->getKey(index), rightBro->getChild(0));
     for (int i = 0; i < start; ++ i) {
         this->insertNonFull(rightBro->getKey(i), rightBro->getChild(i + 1));
     }
-    for (int i = 0; i < start; ++ i) {
+    for (int i = 0; i < start + 1; ++ i) {
         rightBro->removeChild(i, i);
     }
-    parent->updateChidren(k, index, this);
+    parent->updateChidren(k, index - 1, this);
 }
 
 // merge all entries to its left bro, delete this node after merging.

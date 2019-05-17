@@ -209,7 +209,7 @@ TEST(InneNodeTest, RedistributeRightTest) {
     }
     InnerNode* node1 = ((InnerNode*)(tree->getRoot()->getChild(3)));
     InnerNode* node2 = (InnerNode*)(tree->getRoot())->getChild(4);
-    // tree->printTree();
+     // tree->printTree();
     EXPECT_EQ(node1->getChildNum(), 3);
     for (int i = LEAF_DEGREE * 3 * 3 + 1; i <= LEAF_DEGREE * 10; i++) {
         tree->remove(i);
