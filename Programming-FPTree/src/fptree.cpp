@@ -865,6 +865,26 @@ Value FPTree::find(Key k) {
 // TIPS: use Queue
 void FPTree::printTree() {
     // TODO:
+    if (this->root != NULL) {
+        queue <Node *> Queue;
+        Queue.push(root);
+        while (!Queue.empty()) {
+            Node *te = Queue.front();
+            Queue.pop();
+            if (te->ifLeaf()) {
+                LeafNode * le = (LeafNode *) te;
+                le->printNode();
+            }
+            else {
+                InnerNode * innerN = (InnerNode *) te;
+                innerN->printNode();
+                int num = innerN->getChildNum();
+                for (int i = 0; i < num; ++ i) {
+                    Queue.push(innerN->getChild(i));
+                }
+            }
+        }
+    }
 }
 
 // bulkLoading the leaf files and reload the tree
