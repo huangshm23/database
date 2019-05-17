@@ -326,7 +326,7 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
                 }
                 if (lef != NULL) {
                     if (parent->getIsRoot() && parent->getChildNum() == 2) {
-                        this->mergeParentRight(parent, ri);
+                        this->mergeParentLeft(parent, lef);
                         return ifRemove;
                     }
                     else {
@@ -342,7 +342,7 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
     else {
         InnerNode *Ne = (InnerNode *) this->childrens[idx];
         ifRemove = Ne->remove(k, idx, this, te);
-        if (te == true) {
+        if (te == true && parent != NULL) {
             if (this->nKeys < this->degree) {
                 InnerNode *ri = NULL;
                 InnerNode *lef = NULL;
@@ -364,14 +364,14 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
                     }
                     else {
                         this->mergeRight(ri, parent->getKey(index + 1));
-                        parent->removeChild(index + 1, index + 1);
+                        parent->removeChild(index, index + 1);
                         ifDelete = true;
                         return ifRemove;
                     }
                 }
                 if (lef != NULL) {
                     if (parent->getIsRoot() && parent->getChildNum() == 2) {
-                        this->mergeParentRight(parent, ri);
+                        this->mergeParentLeft(parent, lef);
                         return ifRemove;
                     }
                     else {
@@ -391,14 +391,23 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
 void InnerNode::getBrother(const int& index, InnerNode* const& parent, InnerNode* &leftBro, InnerNode* &rightBro) {
 
     // TODO
-    if (index > parent->nChild)
+    /*
+    if (index > parent->nChild || index < 0)
         exit(1);
     if (index > 1) {
-        leftBro = (InnerNode *)parent->childrens[index - 2];
+        leftBro = (InnerNode *)parent->getChild(index - 2);
         if (index <= parent->nChild - 1)
-            rightBro = (InnerNode *)parent->childrens[index];
+            rightBro = (InnerNode *)parent->getChild(index);
+    }*/
+    
+    if (index >= parent->nChild || index < 0)
+        exit(1);
+    if (index >= 1) {
+        leftBro = (InnerNode *)parent->getChild(index - 1);
     }
-
+    if (index <= parent->getChildNum() - 2)
+        rightBro = (InnerNode *)parent->getChild(index + 1);
+    
 }
 
 // merge this node, its parent and left brother(parent is root)
@@ -547,7 +556,7 @@ Value InnerNode::find(const Key& k) {
 Node* InnerNode::getChild(const int& idx) {
 
     // TODO
-    if (idx <= this->nChild)
+    if (idx < this->nChild)
         return this->childrens[idx];
     else
         return NULL;
