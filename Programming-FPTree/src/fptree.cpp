@@ -155,7 +155,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
         InnerNode *le = (InnerNode *)this->childrens[index];
         next = le->insert(k, v);
         if (next != NULL) {
-            int index = this->findIndex(newChild->key);
+            int index = this->findIndex(next->key);
             if (this->nChild == 2 * this->degree + 2) {
                 right = this->split();
                 if (index < this->degree)
@@ -260,7 +260,7 @@ KeyNode* InnerNode::split() {
     // right half entries of old node to the new node, others to the old node. 
 
     // TODO
-    InnerNode *newC = new InnerNode(this->degree, this->tree, this->isRoot);
+    InnerNode *newC = new InnerNode(this->degree, this->tree, false);
     for (int i = 0; i <= this->degree; ++ i) {
         newC->insertNonFull(this->keys[this->degree + i], this->childrens[this->degree + 1 + i]);
     }
@@ -299,30 +299,37 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
         if (te == true) {
             this->removeChild(k, idx);
             if (this->nKeys < this->degree) {
-                if (parent->getIsRoot() && parent->getChildNum() == 2) {
-
+                InnerNode *ri = NULL;
+                InnerNode *lef = NULL;
+                this->getBrother(index, parent, lef, ri);
+                if (ri != NULL && ri->getKeyNum() > this->degree) {
+                    this->redistributeRight(index, ri, parent);
+                    ifDelete = NULL;
+                    return ifRemove;
                 }
-                else {
-                    InnerNode *ri = NULL;
-                    InnerNode *lef = NULL;
-                    this->getBrother(index, parent, lef, ri);
-                    if (ri != NULL && ri->getKeyNum() > this->degree) {
-                        this->redistributeRight(index, ri, parent);
-                        ifDelete = NULL;
+                if (lef != NULL && lef->getKeyNum() > this->degree) {
+                    this->redistributeLeft(index, lef, parent);
+                    ifDelete = NULL;
+                    return ifRemove;
+                }
+                if (ri != NULL) {
+                    if (parent->getIsRoot() && parent->getChildNum() == 2) {
+                        this->mergeParentRight(parent, ri);
                         return ifRemove;
                     }
-                    if (lef != NULL && lef->getKeyNum() > this->degree) {
-                        this->redistributeLeft(index, lef, parent);
-                        ifDelete = NULL;
-                        return ifRemove;
-                    }
-                    if (ri != NULL) {
+                    else {
                         this->mergeRight(ri, parent->getKey(index + 1));
                         parent->removeChild(index + 1, index + 1);
                         ifDelete = true;
                         return ifRemove;
                     }
-                    if (lef != NULL) {
+                }
+                if (lef != NULL) {
+                    if (parent->getIsRoot() && parent->getChildNum() == 2) {
+                        this->mergeParentRight(parent, ri);
+                        return ifRemove;
+                    }
+                    else {
                         this->mergeLeft(lef, parent->getKey(index));
                         parent->removeChild(index, index);
                         ifDelete = true;
@@ -742,6 +749,9 @@ bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, 
     PAllocator* p_allocator = PAllocator::getAllocator();
     for (int i = 0; i < this->n; ++ i) {
         if (this->kv[i].k == k) {
+            for (int j = i; j < this->n - 1; ++ j) {
+                this->kv[j] = this->kv[j + 1];
+            }
             this->bitmap[i / 8] &= ~(1 << (i % 8));
             ifRemove = true;
             -- this->n;
