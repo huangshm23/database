@@ -74,6 +74,14 @@
 1. 增加fptree的查找和更新功能
 2. 增加fptree_test.cpp关于查找和更新的测试
 
+### 函数说明
+#### Update
+Update操作就是在find函数的基础上，找到对应的叶子元素Key-Value对之后，更改相应的Value值。  
+Update分为InnerNode和LeafNode两个部分：
+1. InnerNode由于是储存索引，所以update不直接作用于InnerNode，在这个函数里面，通过递归的方式向下层寻找，直到找到叶子节点
+2. LeafNode部分就是遍历其中所有元素，找到相应Key-Value对，更改值并返回True
+
+
 ### V3 版本使用说明
 首先需进入到Programming-FPTree文件夹，测试步骤：
 1. 进入src文件夹，执行make命令，生成相关可执行文件存放于bin文件夹，执行bin目录下的lycsb文件，测试levelDB的性能。
