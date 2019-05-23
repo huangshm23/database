@@ -128,7 +128,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
         LeafNode *le = (LeafNode *) this->childrens[index];
         next = le->insert(k, v);
         if (next != NULL) {
-            int index = this->findIndex(next->key);
+            //int index = this->findIndex(next->key);
             this->insertNonFull(next->key, next->node);
             if (this->nChild == 2 * this->degree + 2) {
                 right = this->split();
@@ -147,7 +147,7 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
         InnerNode *le = (InnerNode *)this->childrens[index];
         next = le->insert(k, v);
         if (next != NULL) {
-            int index = this->findIndex(next->key);
+            //int index = this->findIndex(next->key);
             this->insertNonFull(next->key, next->node);
             if (this->nChild == 2 * this->degree + 2) {
                 right = this->split();
@@ -579,6 +579,7 @@ LeafNode::LeafNode(FPTree* t) {
     this->tree = t;
     this->isLeaf = true;
     this->degree = 56;
+    //p_allocator->~PAllocator();
 }
 
 // reload the leaf with the specific Persistent Pointer
@@ -593,7 +594,8 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
     this->filePath = DATA_DIR + to_string(p.fileId);//above three are gotten from getLeaf
     this->n = 0;
     uint64_t offset_num = (p.offset - LEAF_GROUP_HEAD) / calLeafSize();
-    this->bitmap = tmp->leaf[offset_num].bitmap;
+    this->bitmap = new Byte[14];
+    //this->bitmap = tmp->leaf[offset_num].bitmap;
     this->fingerprints = tmp->leaf[offset_num].fingerprints;
     this->pNext = NULL;
     this->kv = new KeyValue[2*LEAF_DEGREE];
@@ -604,12 +606,17 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
     Leaf *leaf;
     leaf = tmp->leaf;
     for (int i = 0; i < 14; i ++) {
-        if ((leaf[offset_num].bitmap[i]) == 0) continue;
+        if ((tmp->leaf[offset_num].bitmap[i]) == 0) continue;
         for (int j = 0; j < 8; j ++) {
-            if ((leaf[offset_num].bitmap[i]) & (1<<j)) {
+            if (leaf[offset_num].unit[i * 8 + j].key == 0) {
+                this->bitmap[i] &= ~(1<<j);
+                continue;
+            }
+            if ((leaf[offset_num].bitmap[i]) & (1<<j) && leaf[offset_num].unit[i * 8 + j].key != 0) {
                 this->kv[this->n].k = leaf[offset_num].unit[i * 8 + j].key;
                 this->kv[this->n].v = leaf[offset_num].unit[i * 8 + j].value;
                 this->n ++;
+                this->bitmap[i] |= (1<<j);
             }
         }
         
@@ -618,8 +625,15 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
 
 LeafNode::~LeafNode() {
     // TODO:
+    for (int i = 0; i < this->n; i ++) {
+        this->bitmap[i / 8] |= (1 << (i%8));
+    }
+    for(int i = this->n; i < this->degree * 2; ++i) {
+        this->bitmap[i / 8] &= ~(1<<(i%8));
+        this->kv[i].k = 0;
+    }
+        
     this->persist();
-    
     delete [] kv;
 }
 
@@ -627,9 +641,9 @@ LeafNode::~LeafNode() {
 KeyNode* LeafNode::insert(const Key& k, const Value& v) {
     KeyNode* newChild = NULL;
     // TODO:
-    insertNonFull(k,v);
+    this->insertNonFull(k,v);
     if(this->n >= this->degree * 2){ // sort before split
-        newChild = split();
+        newChild = this->split();
     }
     this->persist();
     return newChild; 
@@ -642,8 +656,7 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
     kv.k = k;
     kv.v = v;
     this->kv[this->n] = kv;
-    int tmp = this->n / 8;
-    this->bitmap[this->n / 8] |= 1 << (this->n % 8);
+    this->bitmap[this->n / 8] |= (1 << (this->n % 8));
     ++this->n;
 }
 
@@ -658,21 +671,23 @@ KeyNode* LeafNode::split() {
     LeafNode* newNode = (LeafNode *)newChild->node;
     LeafNode* next = this->next;
     //modify the old leafNode
-    for(int i = this->n / 2; i < this->n; ++i)
-        this->bitmap[i / 8] &= (1<<((i + 1)%8));
-    this->n /= 2;
+    for(int i = this->n / 2; i < this->n; ++i) {
+        this->bitmap[i / 8] &= ~(1<<(i%8));
+    }
     this->next = newNode;
-    this->persist();
     //modify the new LeafNode
-    newNode->n = this->n;
+    newNode->n = this->n / 2;
     for(int i = 0; i < newNode->n ; ++i){
         newNode->bitmap[i / 8] |= (1<<(i%8));
-        newNode->kv[i]= this->kv[this->n + i];
+        newNode->kv[i]= this->kv[this->n/2 + i];
+        this->kv[this->n/2 + i].k = 0;
     }
     newNode->prev = this;
     newNode->next = next;
     newNode->persist();
     newChild->node = newNode;
+    this->persist();
+    this->n /= 2;
     return newChild;
 }
 
@@ -797,7 +812,10 @@ void LeafNode::persist() {
         leaf[offset_num].unit[i].key = this->kv[i].k;
         leaf[offset_num].unit[i].value = this->kv[i].v;
     }
-    //pmem_msync(pmem_addr, sizeof(LeafGroup));
+    if (pmem_is_pmem(pmem_addr, sizeof(LeafGroup)))
+        pmem_persist(pmem_addr, sizeof(LeafGroup));
+    else 
+        pmem_msync(pmem_addr, sizeof(LeafGroup));
 }
 
 // called by the ~FPTree(), delete the whole tree
@@ -859,6 +877,7 @@ Value FPTree::find(Key k) {
     if (root != NULL) {
         return root->find(k);
     }
+    return MAX_VALUE;
 }
 
 // call the InnerNode and LeafNode print func to print the whole tree
@@ -867,24 +886,39 @@ void FPTree::printTree() {
     // TODO:
     if (this->root != NULL) {
         queue <Node *> Queue;
+        queue <int> level_num;
+        int level = 1;
+        int now = 1;
         Queue.push(root);
+        level_num.push(level);
         while (!Queue.empty()) {
             Node *te = Queue.front();
             Queue.pop();
+            int tmp = level_num.front();
+                level_num.pop();
+                if (tmp != now) {
+                    cout << "\n";
+                    now = tmp;
+                    level ++;
+                }
             if (te->ifLeaf()) {
                 LeafNode * le = (LeafNode *) te;
                 le->printNode();
             }
             else {
+                
                 InnerNode * innerN = (InnerNode *) te;
                 innerN->printNode();
                 int num = innerN->getChildNum();
                 for (int i = 0; i < num; ++ i) {
                     Queue.push(innerN->getChild(i));
+                    level_num.push(level + 1);
                 }
             }
+            
         }
     }
+    cout << "End\n";
 }
 
 // bulkLoading the leaf files and reload the tree
@@ -916,22 +950,6 @@ bool FPTree::bulkLoading() {
             k_node->node = (Node*)l_node;
             flag = true;
             this->root->insertLeaf(*k_node);
-            // for (int i = 0; i < 14; i ++) {
-            //     if ((leaf[n].bitmap[i]) == 0) continue;
-            //     for (int j = 0; j < 8; j ++) {
-            //         if ((leaf[n].bitmap[i]) & (1<<j)) {
-            //             Key k = leaf[n].unit[i * 8 + j].key;
-            //             Value v = leaf[n].unit[i * 8 + j].value;
-            //             //this->insert(k, v);
-                        
-            //             KeyNode *k_node = new KeyNode;
-            //             k_node->key = k;
-            //             k_node->node = (Node*)l_node;
-            //             this->root->insertLeaf(*k_node);
-            //             flag = true; //there is something changed -> reload
-            //         }
-            //     }
-            // }
         }
         ++index;
     }
