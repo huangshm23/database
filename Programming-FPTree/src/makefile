@@ -33,7 +33,7 @@ $(MAIN) : main.o $(FPTREE) $(UTILITY) $(PALLOCATOR) $(CLHASH)
 	$(CXX) $(CXXFLAGS) $^ -o $@ -lpmem
 
 $(FPTREE) : fptree.cpp $(FPTREE_HEADER_DIR)/fptree.h
-	$(CXX) $(CXXFLAGS) -c $< -I $(HEADER_DIR) -g -o $@
+	$(CXX) $(CXXFLAGS) -c $< -I $(HEADER_DIR) -g -o $@ -lpmem
 
 $(UTILITY) : utility.cpp $(HEADER_DIR)/utility/utility.h $(HEADER_DIR)/utility/clhash.h
 	$(CXX) $(CXXFLAGS) -c $< -I $(HEADER_DIR) -g -o $@
@@ -55,8 +55,8 @@ $(LYCSB) : lycsb.o $(BIN)
 lycsb.o : lycsb.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ -lleveldb -lpthread
 
-$(YCSB) : ycsb.o $(FPTREE)
-	$(CXX) $(CXXFLAGS) $^ -g -o $@ -lleveldb -pthread
+$(YCSB) : ycsb.o $(FPTREE) $(PALLOCATOR) $(UTILITY) $(CLHASH)
+	$(CXX) $(CXXFLAGS) $^ -g -o $@ -lleveldb -pthread -lpmem
 ycsb.o : ycsb.cpp $(FPTREE_HEADER_DIR)/fptree.h
 	$(CXX) $(CXXFLAGS) -c $< -I $(HEADER_DIR) -g -o $@
 
@@ -64,4 +64,5 @@ clean :
 	@rm -rf *.o ./bin/* ./bin
 
 cleand : 
-	@rm -rf ../data/*
+	@rm -rf /mnt/pmemdir/fptree/*
+	@rm -rf /mnt/pmemdir/testdb/*
