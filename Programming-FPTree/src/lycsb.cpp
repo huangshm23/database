@@ -11,13 +11,13 @@ const string workload = "../workloads/";
 
 
 //change the filePath to run different test
-const string load = workload + "1w-rw-50-50-load.txt"; // TODO: (Finnished) the workload_load filename
-const string run  = workload + "1w-rw-50-50-run.txt"; // TODO: (Finnished) the workload_run filename
+const string load = workload + "220w-rw-50-50-load.txt"; // TODO: (Finnished) the workload_load filename
+const string run  = workload + "220w-rw-50-50-run.txt"; // TODO: (Finnished) the workload_run filename
 
 const string filePath = "/mnt/pmemdir/testdb";
 
 //decide how many operration will be read and run
-const int READ_WRITE_NUM = 1000; // TODO: (Finished) how many operations
+const int READ_WRITE_NUM = 350000; // TODO: (Finished) how many operations
 
 int main()
 {        
