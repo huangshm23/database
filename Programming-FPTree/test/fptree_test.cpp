@@ -15,6 +15,7 @@ void removeFile() {
     PAllocator::getAllocator()->~PAllocator();
     remove(catalogPath.c_str());
     remove(file1.c_str());
+    remove(file2.c_str());
     remove(freePath.c_str());
 }
 
