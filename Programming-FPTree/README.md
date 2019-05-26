@@ -65,29 +65,30 @@
 ![FPTreeDB架构](../assert/FPTreeDB.png)
 
 ### 实现时间计划
-1. 5/3晚前完成系统说明书，lycsb.cpp，p_allocator.cpp的实现和运行，utility_test.cpp的运行,5/4进行检查优化并发布v1版本branch。
+1. 5/3晚前完成系统说明书，lycsb.cpp，p_allocator.cpp的实现和运行，utility_test.cpp的运行,5/4进行检查优化并发布v1版本branch
 2. 5/10晚前完成fptree.cpp的部分功能实现（插入）和fptree_test.cpp部分的运行，5/11进行检查优化并发布v2版本branch
 3. 5/17晚前完成fptree.cpp的部分功能实现（查找和更新）和fptree_test.cpp部分的运行，5/18进行检查优化并发布v3版本branch
 4. 5/30晚前完成fptree.cpp的部分功能实现（删除）和fptree_test.cpp所有的运行，5/31进行检查优化并发布final版本branch，作为最后发布版本
 
-### V1 版本内容更新
-1. 增加系统说明书。
-2. PAllocator实现并通过utility测试，p_allocator.cpp的实现和运行，utility_test.cpp的运行。注：即内存分配的实现。
-3. LevelDB的使用以及测试，对应lycsb.cpp的实现和运行。注：测试levelDB的性能，方便与之后的系统比较。
+### final 版本内容更新
+1. 完成fptree.cpp的删除功能实现和通过fptree_test.cpp所有的运行
+2. 完成ycsb.cpp的实现和测试
+3. 完成main.cpp的实现和测试
 
-### V1 版本使用说明
+### final 版本使用说明
 首先需进入到Programming-FPTree文件夹，测试步骤：
-1. 进入src文件夹，执行make命令，生成相关可执行文件存放于bin文件夹，执行bin目录下的lycsb文件，测试levelDB的性能。
-2. 退回到Programming-FPTree文件夹，进入test文件夹，执行make命令，测试内存分配的实现效果。注意这里执行test测试，需要在test/目录下运行可执行文件，即使用./bin/XXX_test，以保证相对路径成立。
+1. 进入src文件夹，执行make命令，生成相关可执行文件存放于bin文件夹，执行bin目录下的ycsb文件，对FPTree和levelDB的性能进行比较。
+2. 执行bin目录下的main文件，
+2. 退回到Programming-FPTree文件夹，进入test文件夹，执行make命令，执行bin目录下的fptree_test文件，测试fptree_test.cpp所有的运行。注意这里执行test测试，需要在test/目录下运行可执行文件，即使用./bin/XXX_test，以保证相对路径成立。
 
-### V2 版本内容说明
-1. 完成fptree.cpp的部分内容，使其实现重载（bulkloading）和插入(Insert)操作，并且通过部分测试。
-2. 在test/ 目录下，执行make指令可以编译并链接文件，生成bin目录下的可执行测试文件；在test/ 目录下执行./bin/fptree_test即可运行测试。（注：测试文件已经修改，将未用到的测试项目注释掉，剩下测试重载和插入操作的函数测试）
-3. 使用make clean可以清除make生成的所有文件；执行make cleand可以清除data文件夹内的数据文件。
+### final 版本内容说明
+1. 完成fptree.cpp的所有内容，使其实现五种操作，并且通过全部测试。
+2. 在test/ 目录下，执行make指令可以编译并链接文件，生成bin目录下的可执行测试文件；在test/ 目录下执行./bin/fptree_test即可运行测试。
+3. 每次进行ycsb和main的测试前需要清除所有的数据文件，防止出现错误。
+4. 使用make clean可以清除make生成的所有文件；执行make cleand可以清除数据文件夹内的数据文件。
 
 ### 注意事项：
-1. 需要挂载模拟NVM的文件夹如：/mnt/pmemdir/testdb文件夹，同时需要执行sudo chmod /mnt/pmemdir 0666命令修改pmemdir的权限。
-2. 为了测试方便，这里使用的是Programming-FPTree主目录下的data文件夹作为数据文件夹，如果需要使用模拟NVM环境，则将文件夹路径修改为对应挂载的文件夹，如/mnt/pmemdir/testdb
+1. 需要挂载模拟NVM的文件夹有：/mnt/pmemdir/testdb文件夹和/mnt/pmemdir/fptree文件夹，同时需要执行sudo chmod 777 /mnt/pmemdir 命令修改pmemdir的权限。
 
 ### 作者列表
 黄世明 何思远 黄善恒
