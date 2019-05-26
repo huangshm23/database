@@ -78,7 +78,7 @@
 ### final 版本使用说明
 首先需进入到Programming-FPTree文件夹，测试步骤：
 1. 进入src文件夹，执行make命令，生成相关可执行文件存放于bin文件夹，执行bin目录下的ycsb文件，对FPTree和levelDB的性能进行比较。
-2. 执行bin目录下的main文件，
+2. 执行bin目录下的main文件，测试FPTree的性能。
 2. 退回到Programming-FPTree文件夹，进入test文件夹，执行make命令，执行bin目录下的fptree_test文件，测试fptree_test.cpp所有的运行。注意这里执行test测试，需要在test/目录下运行可执行文件，即使用./bin/XXX_test，以保证相对路径成立。
 
 ### final 版本内容说明
