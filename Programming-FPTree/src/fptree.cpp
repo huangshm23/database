@@ -381,15 +381,15 @@ void InnerNode::getBrother(const int& index, InnerNode* const& parent, InnerNode
 // merge this node, its parent and left brother(parent is root)
 void InnerNode::mergeParentLeft(InnerNode* const& parent, InnerNode* const& leftBro) {
     // TODO:
-    Key k = parent->getKey(0);
+    Key k = parent->getKey(0);          //删除父节点的所有孩子
     parent->removeChild(0, 1);
     parent->removeChild(0, 0);
     parent->insertNonFull(0, leftBro->getChild(0));
-    for (int i = 0; i < leftBro->getKeyNum(); ++ i) {
+    for (int i = 0; i < leftBro->getKeyNum(); ++ i) {           //将左兄弟的孩子插入到父亲中
         parent->insertNonFull(leftBro->getKey(i), leftBro->getChild(i + 1));
     }
     parent->insertNonFull(k, this->childrens[0]);
-    for (int i = 0; i < this->nKeys; ++ i) {
+    for (int i = 0; i < this->nKeys; ++ i) {        //将本身的孩子插入到父亲中
         parent->insertNonFull(this->keys[i], this->childrens[i + 1]);
     }
 }
@@ -397,15 +397,15 @@ void InnerNode::mergeParentLeft(InnerNode* const& parent, InnerNode* const& left
 // merge this node, its parent and right brother(parent is root)
 void InnerNode::mergeParentRight(InnerNode* const& parent, InnerNode* const& rightBro) {
     // TODO:
-    Key k = parent->getKey(0);
+    Key k = parent->getKey(0);          //删除父节点的所有孩子
     parent->removeChild(0, 1);
     parent->removeChild(0, 0);
     parent->insertNonFull(0, this->childrens[0]);
-    for (int i = 0; i < this->nKeys; ++ i) {
+    for (int i = 0; i < this->nKeys; ++ i) {            //将本身的孩子插入到父亲中
         parent->insertNonFull(this->keys[i], this->childrens[i + 1]);
     }
     parent->insertNonFull(k, rightBro->getChild(0));
-    for (int i = 0; i < rightBro->getKeyNum(); ++ i) {
+    for (int i = 0; i < rightBro->getKeyNum(); ++ i) {             //将右兄弟的孩子插入到父亲中
         parent->insertNonFull(rightBro->getKey(i), rightBro->getChild(i + 1));
     }
 }
@@ -423,8 +423,8 @@ void InnerNode::redistributeLeft(const int& index, InnerNode* const& leftBro, In
     int right = num / 2;
     int left = num - right;
     InnerNode* te = new InnerNode (this->degree, this->getTree(), false);
-    Key k = leftBro->getKey(left - 1);
-    for (int i = 0; i < leftBro->getKeyNum() - left; ++ i) {
+    Key k = leftBro->getKey(left - 1);          //进行重新分配
+    for (int i = 0; i < leftBro->getKeyNum() - left; ++ i) {        
         te->insertNonFull(leftBro->getKey(left - 1 + i), leftBro->getChild(i + left));
     }
     for (int i = 0; i < leftBro->getKeyNum() - left; ++ i) {
@@ -447,10 +447,10 @@ void InnerNode::redistributeRight(const int& index, InnerNode* const& rightBro, 
     int start = rightBro->getKeyNum() - right;
     Key k = rightBro->getKey(start);
     this->insertNonFull(parent->getKey(index), rightBro->getChild(0));
-    for (int i = 0; i < start; ++ i) {
+    for (int i = 0; i < start; ++ i) {              //插入孩子到当前节点
         this->insertNonFull(rightBro->getKey(i), rightBro->getChild(i + 1));
     }
-    for (int i = 0; i < start + 1; ++ i) {
+    for (int i = 0; i < start + 1; ++ i) {          //删除右兄弟的孩子
         rightBro->removeChild(i, i);
     }
     parent->updateChidren(k, index - 1, this);
@@ -460,7 +460,7 @@ void InnerNode::redistributeRight(const int& index, InnerNode* const& rightBro, 
 void InnerNode::mergeLeft(InnerNode* const& leftBro, const Key& k) {
     // TODO:
     leftBro->insertNonFull(k, this->childrens[0]);
-    for (int i = 0; i < this->nKeys; ++ i) {
+    for (int i = 0; i < this->nKeys; ++ i) {        //将当前节点的孩子插入到左兄弟中
         leftBro->insertNonFull(this->keys[i], this->childrens[i + 1]);
     }
 }
@@ -469,7 +469,7 @@ void InnerNode::mergeLeft(InnerNode* const& leftBro, const Key& k) {
 void InnerNode::mergeRight(InnerNode* const& rightBro, const Key& k) {
     // TODO:
     this->insertNonFull(k, rightBro->childrens[0]);
-    for (int i = 0; i < rightBro->getKeyNum(); ++ i) {
+    for (int i = 0; i < rightBro->getKeyNum(); ++ i) {      //将当前右兄弟的孩子插入到当前节点中
         this->insertNonFull(rightBro->getKey(i), rightBro->getChild(i + 1));
     }
 }
@@ -477,28 +477,29 @@ void InnerNode::mergeRight(InnerNode* const& rightBro, const Key& k) {
 // remove a children from the current node, used by remove func
 void InnerNode::removeChild(const int& keyIdx, const int& childIdx) {
     // TODO:
-    for (int i = keyIdx; i < this->nKeys - 1; ++ i) {
+    for (int i = keyIdx; i < this->nKeys - 1; ++ i) {       //往前移动key值
         this->keys[i] =  this->keys[i + 1];
     }
-    for (int i = childIdx; i < this->nChild - 1; ++ i) {
+    for (int i = childIdx; i < this->nChild - 1; ++ i) {        //往前移动孩子
         this->childrens[i] = this->childrens[i + 1];
     }
-    -- this->nChild;
-    -- this->nKeys;
+    -- this->nChild;            //孩子数减一
+    if (this->nKeys >= 1)       //key值减一
+        -- this->nKeys;
 }
 
 // update the target entry, return true if the update succeed.
 bool InnerNode::update(const Key& k, const Value& v) {
     // TODO:
     bool flag = false;
-    int index = this->findIndex(k);
-    if (index > this->nKeys)
+    int index = this->findIndex(k);     //查找到更改的值的位置
+    if (index > this->nKeys)        //若不符合则返回false
         return flag;
-    if (this->childrens[index]->ifLeaf()) {
+    if (this->childrens[index]->ifLeaf()) {     //若下一层为叶子，则调用叶子的更改函数
         LeafNode *te = (LeafNode *) this->childrens[index];
         flag =  te->update(k, v);
     }
-    else {
+    else {                       //若下一层不为叶子，则调用中间结点的更改函数
         InnerNode *te1 = (InnerNode *) this->childrens[index];
         flag = te1->update(k, v);
     }
@@ -508,12 +509,14 @@ bool InnerNode::update(const Key& k, const Value& v) {
 // find the target value with the search key, return MAX_VALUE if it fails.
 Value InnerNode::find(const Key& k) {
     // TODO:
-    int index = this->findIndex(k);
-    if (this->childrens[index]->ifLeaf()) {
+    int index = this->findIndex(k);     //查找到更改的值的位置
+    if (index > this->nKeys)        //若不符合则返回false
+        return MAX_VALUE;
+    if (this->childrens[index]->ifLeaf()) {      //若下一层为叶子，则调用叶子的查找函数
         LeafNode * te1 = (LeafNode *)this->childrens[index];
         return te1->find(k);
     }
-    else {
+    else {              //若下一层不为叶子，则调用中间结点的查找函数
         InnerNode * te = (InnerNode *)this->childrens[index];
         return te->find(k);
     }
@@ -524,7 +527,7 @@ Value InnerNode::find(const Key& k) {
 Node* InnerNode::getChild(const int& idx) {
 
     // TODO
-    if (idx < this->nChild)
+    if (idx < this->nChild)         //判断index是否超过范围
         return this->childrens[idx];
     else
         return NULL;
@@ -532,7 +535,7 @@ Node* InnerNode::getChild(const int& idx) {
 
 // get the key of this InnerNode
 Key InnerNode::getKey(const int& idx) {
-    if (idx < this->nKeys) {
+    if (idx < this->nKeys) {        //判断index是否超过范围
         return this->keys[idx];
     } else {
         return MAX_KEY;
@@ -741,17 +744,17 @@ bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, 
     PAllocator* p_allocator = PAllocator::getAllocator();
     for (int i = 0; i < this->n; ++ i) {
         if (this->kv[i].k == k) {
-            for (int j = i; j < this->n - 1; ++ j) {
+            for (int j = i; j < this->n - 1; ++ j) {            //往前移动keyvalue
                 this->kv[j] = this->kv[j + 1];
             }
             this->bitmap[(this->n - 1) / 8] &= ~(1 << ((this->n) % 8));
             ifRemove = true;
             -- this->n;
-            if (this->n == 0) {
+            if (this->n == 0) {         //如果该叶子为空，回收叶子
                 ifDelete = true;
                 p_allocator->freeLeaf(this->pPointer);
             }
-            this->persist();
+            this->persist();            //持久化更改
             break;
         }
     }
@@ -763,14 +766,14 @@ bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, 
 bool LeafNode::update(const Key& k, const Value& v) {
     bool ifUpdate = false;
     // TODO:
-    for (int i = 0; i < this->n; ++ i) {
-        if (this->kv[i].k == k) {
+    for (int i = 0; i < this->n; ++ i) {        //查找
+        if (this->kv[i].k == k) {       //查找到便更改
             this->kv[i].v = v;
             ifUpdate = true;
             break;
         }
     }
-    if (ifUpdate)
+    if (ifUpdate)           //持久化更改
         this->persist();
     return ifUpdate;
 }
@@ -778,8 +781,8 @@ bool LeafNode::update(const Key& k, const Value& v) {
 // if the entry can not be found, return the max Value
 Value LeafNode::find(const Key& k) {
     // TODO:
-    for (int i = 0; i < this->n; ++ i) {
-        if (this->kv[i].k == k)
+    for (int i = 0; i < this->n; ++ i) {        //进行查找
+        if (this->kv[i].k == k)         //查找到便返回
             return this->kv[i].v;
     }
     return MAX_VALUE;
