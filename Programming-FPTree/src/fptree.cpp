@@ -70,11 +70,11 @@ void InnerNode::insertNonFull(const Key& k, Node* const& node) {
     if (node == NULL)
         exit(1);
     else {
-        if (this->getChildNum() == 0) { //插入第一個節點
+        if (this->getChildNum() == 0) { //插入第一個节点，不需要增加key
             this->childrens[0] = node;
             this->nChild ++;
         }
-        else {
+        else {             //非第一次插入，需要增加key，同时需要移动，保持有序
             int index = this->findIndex(k);
             int num = index + 1;
             for (int i = 0; i <= this->nKeys - num; ++ i) {
@@ -124,15 +124,15 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
         this->insertNonFull(k, le);
         return newChild;
     }
-    if (this->childrens[index]->ifLeaf()) {
+    if (this->childrens[index]->ifLeaf()) {         //下一层为叶子，调用叶子的插入
         LeafNode *le = (LeafNode *) this->childrens[index];
         next = le->insert(k, v);
         if (next != NULL) {
             //int index = this->findIndex(next->key);
             this->insertNonFull(next->key, next->node);
-            if (this->nChild == 2 * this->degree + 2) {
+            if (this->nChild == 2 * this->degree + 2) {           //如果满了，便分裂
                 right = this->split();
-                if (this->isRoot) {
+                if (this->isRoot) {           //查看是否需要换根节点
                     InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
                     this->isRoot = false;
                     newRoot->insertNonFull(this->keys[this->nKeys - 1], this);
@@ -143,15 +143,15 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
             }
         }
     }
-    else {
+    else {                              //下一层不是叶子，调用叶子节点的插入
         InnerNode *le = (InnerNode *)this->childrens[index];
         next = le->insert(k, v);
         if (next != NULL) {
             //int index = this->findIndex(next->key);
             this->insertNonFull(next->key, next->node);
-            if (this->nChild == 2 * this->degree + 2) {
+            if (this->nChild == 2 * this->degree + 2) {         //如果满了，便分裂
                 right = this->split();
-                if (this->isRoot) {
+                if (this->isRoot) {                 //查看是否需要换根节点
                     InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
                     this->isRoot = false;
                     newRoot->insertNonFull(this->keys[this->nKeys - 1], this);
@@ -173,7 +173,7 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
     // first and second leaf insertion into the tree
     if (this->isRoot && this->nKeys == 0) {
         // TODO:
-        this->insertNonFull(leaf.key, leaf.node);
+        this->insertNonFull(leaf.key, leaf.node);       //直接插入节点
         return newChild;
     }
     
@@ -184,15 +184,15 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
     KeyNode* right = NULL;
     KeyNode* next = NULL;
     int index = this->findIndex(leaf.key);
-    if (!this->childrens[0]->ifLeaf()) { //如果爲扉頁，進入下一層
+    if (!this->childrens[0]->ifLeaf()) { //如果为非页，進入下一層
         InnerNode* nextIn = (InnerNode *) this->childrens[index];
         next = nextIn->insertLeaf(leaf);
         if (next != NULL) {
             index = this->findIndex(next->key);
             this->insertNonFull(next->key, next->node);
-            if (this->nKeys == this->degree * 2 + 1) {
-                right = this->split();
-                if (this->isRoot) {
+            if (this->nKeys == this->degree * 2 + 1) {      //如果满了，便分裂
+                right = this->split(); 
+                if (this->isRoot) {             //查看是否需要换根节点
                     InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
                     this->isRoot = false;
                     newRoot->insertNonFull(this->keys[this->nKeys - 1], this);
@@ -229,14 +229,14 @@ KeyNode* InnerNode::split() {
 
     // TODO
     InnerNode *newC = new InnerNode(this->degree, this->tree, false);
-    for (int i = 0; i <= this->degree; ++ i) {
+    for (int i = 0; i <= this->degree; ++ i) {          //将右半部分插入到新节点
         newC->insertNonFull(this->keys[this->degree + i], this->childrens[this->degree + 1 + i]);
     }
-    this->nKeys = this->degree;
+    this->nKeys = this->degree;         //修改原先节点的值
     this->nChild = this->degree + 1;
     newChild->key = this->keys[this->degree];
     newChild->node = newC;
-    return newChild;
+    return newChild;        //返回keyNode以便上一层插入
 }
 
 // remove the target entry
