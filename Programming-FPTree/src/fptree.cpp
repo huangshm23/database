@@ -208,9 +208,9 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
     else {
         index = this->findIndex(leaf.key);
         this->insertNonFull(leaf.key, leaf.node);
-        if (this->nKeys == this->degree * 2 + 1) {
+        if (this->nKeys == this->degree * 2 + 1) {      //如果满了，便分裂
             right = this->split();
-            if (this->isRoot) {
+            if (this->isRoot) {                 //查看是否需要换根节点
                 InnerNode * newRoot = new InnerNode(this->degree, this->tree, true);
                 this->isRoot = false;
                 newRoot->insertNonFull(this->keys[this->nKeys - 1], this);
@@ -248,7 +248,7 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
     // only have one leaf
     // TODO:
     int idx = this->findIndex(k);
-    if (this->nChild == 1 && this->childrens[0]->ifLeaf()) {
+    if (this->nChild == 1 && this->childrens[0]->ifLeaf()) {            //仅仅只有一个叶节点
         LeafNode *le = (LeafNode *) this->childrens[0];
         if (le->remove(k, 0, this, te)) {
             ifRemove = true;
@@ -259,33 +259,33 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
     }
     // recursive remove
     // TODO:
-    else if (this->childrens[idx]->ifLeaf()) {
+    else if (this->childrens[idx]->ifLeaf()) {              //如果下一层为叶子，调用叶子的删除函数
         LeafNode *le = (LeafNode *) this->childrens[idx];
         if (le->remove(k, idx, this, te)) {
             ifRemove = true;
         }
-        if (te == true) {
+        if (te == true) {           //判断是否需要删除整个节点
             this->removeChild(k, idx);
-            if (this->nKeys < this->degree) {
+            if (this->nKeys < this->degree) {       //是否需要重分布或者合并
                 InnerNode *ri = NULL;
                 InnerNode *lef = NULL;
                 this->getBrother(index, parent, lef, ri);
-                if (ri != NULL && ri->getKeyNum() > this->degree) {
+                if (ri != NULL && ri->getKeyNum() > this->degree) {     //可以进行右的重分布
                     this->redistributeRight(index, ri, parent);
                     ifDelete = NULL;
                     return ifRemove;
                 }
-                if (lef != NULL && lef->getKeyNum() > this->degree) {
+                if (lef != NULL && lef->getKeyNum() > this->degree) {    //可以进行左的重分布
                     this->redistributeLeft(index, lef, parent);
                     ifDelete = NULL;
                     return ifRemove;
                 }
                 if (ri != NULL) {
-                    if (parent->getIsRoot() && parent->getChildNum() == 2) {
+                    if (parent->getIsRoot() && parent->getChildNum() == 2) {        //需要与父亲节点及右兄弟合并
                         this->mergeParentRight(parent, ri);
                         return ifRemove;
                     }
-                    else {
+                    else {                                  //与右兄弟合并
                         this->mergeRight(ri, parent->getKey(index + 1));
                         parent->removeChild(index + 1, index + 1);
                         ifDelete = true;
@@ -293,11 +293,11 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
                     }
                 }
                 if (lef != NULL) {
-                    if (parent->getIsRoot() && parent->getChildNum() == 2) {
+                    if (parent->getIsRoot() && parent->getChildNum() == 2) {         //需要与父亲节点及左兄弟合并
                         this->mergeParentLeft(parent, lef);
                         return ifRemove;
                     }
-                    else {
+                    else {                                  //与左兄弟合并
                         this->mergeLeft(lef, parent->getKey(index));
                         parent->removeChild(index, index);
                         ifDelete = true;
@@ -307,30 +307,30 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
             }
         }
     }
-    else {
+    else {                   //如果下一层为中间结点，调用中间结点的删除函数
         InnerNode *Ne = (InnerNode *) this->childrens[idx];
         ifRemove = Ne->remove(k, idx, this, te);
-        if (te == true && parent != NULL) {
-            if (this->nKeys < this->degree) {
+        if (te == true && parent != NULL) {                 
+            if (this->nKeys < this->degree) {               //判断是否需要重分布或者合并
                 InnerNode *ri = NULL;
                 InnerNode *lef = NULL;
                 this->getBrother(index, parent, lef, ri);
-                if (ri != NULL && ri->getKeyNum() > this->degree) {
+                if (ri != NULL && ri->getKeyNum() > this->degree) {          //与右兄弟重分布
                     this->redistributeRight(index, ri, parent);
                     ifDelete = NULL;
                     return ifRemove;
                 }
-                if (lef != NULL && lef->getKeyNum() > this->degree) {
+                if (lef != NULL && lef->getKeyNum() > this->degree) {       //与左兄弟重分布
                     this->redistributeLeft(index, lef, parent);
                     ifDelete = NULL;
                     return ifRemove;
                 }
                 if (ri != NULL) {
-                    if (parent->getIsRoot() && parent->getChildNum() == 2) {
+                    if (parent->getIsRoot() && parent->getChildNum() == 2) {        //需要与父亲节点及右兄弟合并
                         this->mergeParentRight(parent, ri);
                         return ifRemove;
                     }
-                    else {
+                    else {                                  //与右兄弟合并
                         this->mergeRight(ri, parent->getKey(index + 1));
                         parent->removeChild(index, index + 1);
                         ifDelete = true;
@@ -338,12 +338,12 @@ bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent,
                     }
                 }
                 if (lef != NULL) {
-                    if (parent->getIsRoot() && parent->getChildNum() == 2) {
+                    if (parent->getIsRoot() && parent->getChildNum() == 2) {        //需要与父亲节点及左兄弟合并
                         this->mergeParentLeft(parent, lef);
                         return ifRemove;
                     }
                     else {
-                        this->mergeLeft(lef, parent->getKey(index));
+                        this->mergeLeft(lef, parent->getKey(index));     //与左兄弟合并
                         parent->removeChild(index, index);
                         ifDelete = true;
                         return ifRemove;
@@ -368,12 +368,12 @@ void InnerNode::getBrother(const int& index, InnerNode* const& parent, InnerNode
             rightBro = (InnerNode *)parent->getChild(index);
     }*/
     
-    if (index >= parent->nChild || index < 0)
+    if (index >= parent->nChild || index < 0)           //左右兄弟都不存在
         exit(1);
-    if (index >= 1) {
+    if (index >= 1) {       //获得左兄弟
         leftBro = (InnerNode *)parent->getChild(index - 1);
     }
-    if (index <= parent->getChildNum() - 2)
+    if (index <= parent->getChildNum() - 2)         //获得右兄弟
         rightBro = (InnerNode *)parent->getChild(index + 1);
     
 }
