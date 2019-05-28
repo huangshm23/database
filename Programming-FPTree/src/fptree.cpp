@@ -608,7 +608,7 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
     this->degree = 56;
     Leaf *leaf;
     leaf = tmp->leaf;
-    for (int i = 0; i < 14; i ++) {
+    for (int i = 0; i < 14; i ++) {// using bit to read data
         if ((tmp->leaf[offset_num].bitmap[i]) == 0) continue;
         for (int j = 0; j < 8; j ++) {
             if (leaf[offset_num].unit[i * 8 + j].key == 0) {
@@ -636,7 +636,7 @@ LeafNode::~LeafNode() {
         this->kv[i].k = 0;
     }
         
-    this->persist();
+    this->persist();//persistent
     delete [] kv;
 }
 
