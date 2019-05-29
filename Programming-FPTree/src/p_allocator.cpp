@@ -85,7 +85,11 @@ PAllocator::PAllocator() {
         this->startLeaf = tmp->treeStartLeaf;
         pmem_unmap(pmem_addr_allo, maplen_allo);
 
-        if((pmem_addr_free = (char*)pmem_map_file(freeListPath.c_str(), this->freeNum*sizeof(PPointer), PMEM_FILE_CREATE, 
+        size_t size_free;
+        if (this->freeNum == 0) size_free = sizeof(PPointer);
+        else size_free = this->freeNum * sizeof(PPointer);
+
+        if((pmem_addr_free = (char*)pmem_map_file(freeListPath.c_str(), size_free, PMEM_FILE_CREATE, 
         0666, &maplen_free, &is_pmem_free)) == NULL) {
             perror("pmem_map_file");
             exit(1);
@@ -110,10 +114,13 @@ PAllocator::PAllocator() {
             exit(1);
         }
         catalog *tmp;
+        PPointer p_tmp;
+        p_tmp.fileId = 0;
+        p_tmp.offset = -1;
         tmp = (catalog*)pmem_addr_allo;
         this->maxFileId =  tmp->maxFileId = 1;
         this->freeNum = tmp->freeNum = 0;
-        this->startLeaf = tmp->treeStartLeaf;
+        this->startLeaf = tmp->treeStartLeaf = p_tmp;
         pmem_unmap(pmem_addr_allo, maplen_allo);
 
         if((pmem_addr_free = (char*)pmem_map_file(freeListPath.c_str(), sizeof(PPointer), PMEM_FILE_CREATE, 
@@ -181,6 +188,9 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
 
     freeList.pop_back();
     this->freeNum = freeList.size();
+    if (this->startLeaf.fileId == 0) {
+        this->startLeaf = p;
+    }
     return true;
 }
 

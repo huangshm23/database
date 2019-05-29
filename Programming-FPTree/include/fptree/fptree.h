@@ -122,6 +122,7 @@ private:
 
     // the NVM relative variables
     char*      pmem_addr;      // the pmem address of the leaf node
+    int is_pmem;               // record if it is pmem_addr(added by ourselves)
 
     // the pointer below are all pmem address based on pmem_addr
     // need to set the pointer pointed to NVM address
