@@ -11,7 +11,7 @@ const string workload = "../workloads/"; // TODO: the workload folder filepath
 const string load = workload + "220w-rw-50-50-load.txt"; // TODO: the workload_load filename
 const string run  = workload + "220w-rw-50-50-run.txt"; // TODO: the workload_run filename
 
-const int READ_WRITE_NUM = 1000; // TODO: amount of operations
+const int READ_WRITE_NUM = 350000; // TODO: amount of operations
 
 int main()
 {        
