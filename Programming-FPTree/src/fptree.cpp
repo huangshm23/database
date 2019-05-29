@@ -579,6 +579,7 @@ LeafNode::LeafNode(FPTree* t) {
     this->tree = t;
     this->isLeaf = true;
     this->degree = 56;
+    this->is_pmem = pmem_is_pmem(pmem_addr, sizeof(LeafGroup));
     //p_allocator->~PAllocator();
 }
 
@@ -621,6 +622,7 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
         }
         
     }
+    this->is_pmem = pmem_is_pmem(pmem_addr, sizeof(LeafGroup)); 
 }
 
 LeafNode::~LeafNode() {
@@ -812,10 +814,18 @@ void LeafNode::persist() {
         leaf[offset_num].unit[i].key = this->kv[i].k;
         leaf[offset_num].unit[i].value = this->kv[i].v;
     }
-    if (pmem_is_pmem(pmem_addr, sizeof(LeafGroup)))
-        pmem_persist(pmem_addr, sizeof(LeafGroup));
-    else 
-        pmem_msync(pmem_addr, sizeof(LeafGroup));
+    if (this->is_pmem != -1) {
+        if (this->is_pmem)
+            pmem_persist(pmem_addr, sizeof(LeafGroup));
+        else
+            pmem_msync(pmem_addr, sizeof(LeafGroup));
+    } 
+    else {
+        if (this->is_pmem = pmem_is_pmem(pmem_addr, sizeof(LeafGroup)))
+            pmem_persist(pmem_addr, sizeof(LeafGroup));
+        else 
+            pmem_msync(pmem_addr, sizeof(LeafGroup));
+    }
 }
 
 // called by the ~FPTree(), delete the whole tree
