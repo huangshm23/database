@@ -126,7 +126,9 @@
 4. 使用make clean可以清除make生成的所有文件；执行make cleand可以清除数据文件夹内的数据文件。
 
 ### 注意事项：
-1. 需要挂载模拟NVM的文件夹有：/mnt/pmemdir/testdb文件夹和/mnt/pmemdir/fptree文件夹，同时需要执行sudo chmod 777 /mnt/pmemdir 命令修改pmemdir的权限。
-
+1. 需要挂载模拟NVM的文件夹有：/mnt/pmemdir/fptree文件夹，同时需要执行sudo chmod 777 /mnt/pmemdir/fptree 命令修改访问fptree文件夹的权限。
+2. 若是出现段错误，可能需要执行make cleand清除错误数据文件，然后重新进行测试。
+3. 若是出现权限问题，可以执行执行sudo chmod 777 路径 命令修改对应文件夹权限。
+4. 若是性能测试时，执行速度过慢，可能是未挂载对应文件夹。
 ### 作者列表
 黄世明 何思远 黄善恒
