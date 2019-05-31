@@ -114,11 +114,18 @@
 3. 完成main.cpp的实现和测试
 
 ### final 版本使用说明
+首先需要挂载NVM的环境，并且将utility.h文件中的**DATA_DIR**变量设为挂载的文件夹（关于权限设置请查看注意事项）。  
+其次对于levelDB的测试同样需要修改相应的路径，分别在lycsb.cpp和ycsb.cpp中修改**filePath**变量为文件夹路径。  
 首先需进入到Programming-FPTree文件夹，测试步骤：
-1. 进入src文件夹，执行make命令，生成相关可执行文件存放于bin文件夹，执行bin目录下的ycsb文件，对FPTree和levelDB的性能进行比较。
-2. 执行bin目录下的main文件，测试FPTree的性能。
-2. 退回到Programming-FPTree文件夹，进入test文件夹，执行make命令，执行bin目录下的fptree_test文件，测试fptree_test.cpp所有的运行。注意这里执行test测试，需要在test/目录下运行可执行文件，即使用./bin/XXX_test，以保证相对路径成立。
+#### src文件夹下的测试执行：
+（注意在测试之前通过make cleand命令清空数据文件夹的内容，此处数据文件夹定为"/mnt/pmemdir/fptree/"和"/mnt/pmemdir/testdb"，如果需要修改，则到makefile文件里面修改cleand条目下的指令）  
+1. 进入src文件夹，执行make命令，生成相关可执行文件存放于bin文件夹（需要现在此目录下新建一个bin文件夹），执行bin目录下的ycsb文件（注意这里执行的命令为./bin/ycsb，为了保证相对路径的成立），对FPTree和levelDB的性能进行比较。
+2. 执行指令./bin/lycsb单独测试levelDB的性能。
 
+#### test文件夹下的测试执行：
+(注意：在测试之前需要**手动清空数据文件夹内的内容**，否则会导致测试数据出错。由于测试文件内带有删除文件的操作，所以此处没有设置make cleand指令，需要与src文件夹下的测试过程区分)
+1. 进入test文件夹目录下，使用make指令，生成相关可执行文件存放于bin文件夹（需要现在此目录下新建一个bin文件夹），然后执行bin目录下的两个测试文件。（注意这里执行的命令为./bin/XXXX_test，为了保证相对路径的成立）
+---
 ### final 版本内容说明
 1. 完成fptree.cpp的所有内容，使其实现五种操作，并且通过全部测试。
 2. 在test/ 目录下，执行make指令可以编译并链接文件，生成bin目录下的可执行测试文件；在test/ 目录下执行./bin/fptree_test即可运行测试。
@@ -126,9 +133,11 @@
 4. 使用make clean可以清除make生成的所有文件；执行make cleand可以清除数据文件夹内的数据文件。
 
 ### 注意事项：
-1. 需要挂载模拟NVM的文件夹有：/mnt/pmemdir/fptree文件夹，同时需要执行sudo chmod 777 /mnt/pmemdir/fptree 命令修改访问fptree文件夹的权限。
-2. 若是出现段错误，可能需要执行make cleand清除错误数据文件，然后重新进行测试。
-3. 若是出现权限问题，可以执行执行sudo chmod 777 路径 命令修改对应文件夹权限。
-4. 若是性能测试时，执行速度过慢，可能是未挂载对应文件夹。
+1. 需要挂载模拟NVM的文件夹，本次测试中使用的是"/mnt/pmemdir/fptree"文件夹，同时需要执行sudo chmod 777 /mnt/pmemdir/fptree 命令修改访问相应文件夹的权限。
+2. 需要修改utility.h文件中的**DATA_DIR**变量为挂载文件夹。
+3. 需要修改lycsb.cpp和ycsb.cpp中的**filePath**的变量，作为levelDB的文件目录。
+4. 若是出现段错误，可能需要执行make cleand清除错误数据文件（注意此命令仅在src文件夹下生效，会清除"/mnt/pmemdir/fptree"和"/mnt/pmemdir/levelDB"文件夹内的所有内容，如果需要修改需要删除的目录，请到makefile文件中修改cleand条目的内容），然后重新进行测试。
+5. 若是出现权限问题，可以执行执行sudo chmod 777 路径 命令修改对应文件夹权限。
+6. 若是性能测试时，执行速度过慢，可能是未挂载对应文件夹。
 ### 作者列表
 黄世明 何思远 黄善恒
