@@ -574,8 +574,8 @@ LeafNode::LeafNode(FPTree* t) {
     this->pPointer = ppointer; 
     this->filePath = DATA_DIR + to_string(ppointer.fileId);//above three are gotten from getLeaf
     this->n = 0;
-    this->bitmap = tmp->leaf[15].bitmap;
-    this->fingerprints = tmp->leaf[15].fingerprints;
+    this->bitmap = new Byte[14];
+    this->fingerprints = new Byte[112];
     this->pNext = NULL;
     this->kv = new KeyValue[2*LEAF_DEGREE];
     this->prev = this->next = NULL;
@@ -600,7 +600,7 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
     uint64_t offset_num = (p.offset - LEAF_GROUP_HEAD) / calLeafSize();
     this->bitmap = new Byte[14];
     //this->bitmap = tmp->leaf[offset_num].bitmap;
-    this->fingerprints = tmp->leaf[offset_num].fingerprints;
+    this->fingerprints = new Byte[2*LEAF_DEGREE];
     this->pNext = NULL;
     this->kv = new KeyValue[2*LEAF_DEGREE];
     this->prev = this->next = NULL;
@@ -619,6 +619,7 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
             if ((leaf[offset_num].bitmap[i]) & (1<<j) && leaf[offset_num].unit[i * 8 + j].key != 0) {
                 this->kv[this->n].k = leaf[offset_num].unit[i * 8 + j].key;
                 this->kv[this->n].v = leaf[offset_num].unit[i * 8 + j].value;
+                this->fingerprints[this->n] = leaf[offset_num].fingerprints[i * 8 + j];
                 this->n ++;
                 this->bitmap[i] |= (1<<j);
             }
@@ -636,6 +637,7 @@ LeafNode::~LeafNode() {
     for(int i = this->n; i < this->degree * 2; ++i) {
         this->bitmap[i / 8] &= ~(1<<(i%8));
         this->kv[i].k = 0;
+        this->fingerprints[i] = 0;
     }
         
     this->persist();//persistent
@@ -662,6 +664,7 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
     kv.v = v;
     this->kv[this->n] = kv;
     this->bitmap[this->n / 8] |= (1 << (this->n % 8));
+    this->fingerprints[this->n] = keyHash(k);  //give a hash number
     ++this->n;
 }
 
@@ -685,7 +688,9 @@ KeyNode* LeafNode::split() {
     for(int i = 0; i < newNode->n ; ++i){
         newNode->bitmap[i / 8] |= (1<<(i%8));
         newNode->kv[i]= this->kv[this->n/2 + i];
+        newNode->fingerprints[i]= this->fingerprints[this->n/2 + i];
         this->kv[this->n/2 + i].k = 0;
+        this->fingerprints[this->n/2 + i] = 0; //together with key-value
     }
     newNode->prev = this;
     newNode->next = next;
@@ -709,6 +714,7 @@ Key LeafNode::findSplitKey() {
                 kv[i] = kv[j];
                 kv[j] = kvi;
                 kvi = kv[i];
+                swap(fingerprints[i],fingerprints[j]); //swap together with key-value
             }
         }
     }
@@ -745,11 +751,13 @@ bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, 
     // TODO:
     PAllocator* p_allocator = PAllocator::getAllocator();
     for (int i = 0; i < this->n; ++ i) {
-        if (this->kv[i].k == k) {
+        if (this->kv[i].k == k && (this->bitmap[i / 8] & 1<<(i%8)) && this->fingerprints[i] == keyHash(k)) {
             for (int j = i; j < this->n - 1; ++ j) {            //往前移动keyvalue
                 this->kv[j] = this->kv[j + 1];
+                this->fingerprints[j] = this->fingerprints[j + 1]; //move forward with key-value
             }
-            this->bitmap[(this->n - 1) / 8] &= ~(1 << ((this->n) % 8));
+            this->fingerprints[this->n] = 0;
+            this->bitmap[(this->n - 1) / 8] &= ~(1 << ((this->n - 1) % 8));
             ifRemove = true;
             -- this->n;
             if (this->n == 0) {         //如果该叶子为空，回收叶子
@@ -769,7 +777,7 @@ bool LeafNode::update(const Key& k, const Value& v) {
     bool ifUpdate = false;
     // TODO:
     for (int i = 0; i < this->n; ++ i) {        //查找
-        if (this->kv[i].k == k) {       //查找到便更改
+        if (this->kv[i].k == k && (this->bitmap[i / 8] & 1<<(i%8)) && this->fingerprints[i] == keyHash(k)) {       //查找到便更改
             this->kv[i].v = v;
             ifUpdate = true;
             break;
@@ -784,7 +792,7 @@ bool LeafNode::update(const Key& k, const Value& v) {
 Value LeafNode::find(const Key& k) {
     // TODO:
     for (int i = 0; i < this->n; ++ i) {        //进行查找
-        if (this->kv[i].k == k)         //查找到便返回
+        if (this->kv[i].k == k && (this->bitmap[i / 8] & 1<<(i%8)) && (this->fingerprints[i] == keyHash(k)))   //查找到便返回
             return this->kv[i].v;
     }
     return MAX_VALUE;
@@ -813,9 +821,11 @@ void LeafNode::persist() {
     PPointer tmp_p = this->pPointer;
     uint64_t offset_num = (tmp_p.offset - LEAF_GROUP_HEAD) / calLeafSize();
     leaf[offset_num].bitmap = this->bitmap;
+    // leaf[offset_num].fingerprints = this->fingerprints;
     for (int i = 0; i < this->n; i ++) {
         leaf[offset_num].unit[i].key = this->kv[i].k;
         leaf[offset_num].unit[i].value = this->kv[i].v;
+        leaf[offset_num].fingerprints[i] = this->fingerprints[i];
     }
     if (this->is_pmem != -1) {
         if (this->is_pmem)
